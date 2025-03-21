@@ -27,7 +27,7 @@ Keep an eye out for the special Spotify exhibit! It's like those audio guides at
 
 ## 🏃‍♂️ Quick Start
 
-1. Visit [https://davidyen1124.github.io/portfolio/](https://davidyen1124.github.io/portfolio/)
+1. Visit [https://d.daviddennislinda.com](https://d.daviddennislinda.com)
 2. Click to start
 3. Get lost in the magnificence of my work
 4. Try not to bump into the virtual walls
