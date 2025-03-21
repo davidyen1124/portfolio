@@ -13,16 +13,6 @@
         font-family: Arial, sans-serif;
         background-color: #000;
       }
-      #info {
-        position: absolute;
-        top: 10px;
-        width: 100%;
-        text-align: center;
-        color: white;
-        pointer-events: none;
-        z-index: 100;
-        text-shadow: 1px 1px 1px black;
-      }
       #blocker {
         position: absolute;
         width: 100%;
@@ -94,7 +84,6 @@
         <p>Click to start</p>
       </div>
     </div>
-    <div id="info"></div>
 
     <!-- Mobile joystick controls -->
     <div id="joystick-left" class="joystick-container">
@@ -802,14 +791,6 @@
           cameraPos.z = isMobile
             ? camera.position.z
             : controls.getObject().position.z
-
-          document.getElementById(
-            'info'
-          ).textContent = `Viewing: ${object.userData.name}`
-
-          setTimeout(() => {
-            document.getElementById('info').textContent = ''
-          }, 2000)
 
           window.open(object.userData.url, '_blank')
         }
