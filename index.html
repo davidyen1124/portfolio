@@ -54,6 +54,33 @@
         align-items: center;
         z-index: 999;
       }
+      .joystick-container {
+        position: absolute;
+        bottom: 20px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        touch-action: none; /* important on mobile to prevent default gestures */
+        display: none; /* hidden by default, shown only if on mobile */
+      }
+      #joystick-left {
+        left: 20px;
+      }
+      #joystick-right {
+        right: 20px;
+      }
+      .joystick {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 60px;
+        height: 60px;
+        margin-left: -30px;
+        margin-top: -30px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.3);
+        touch-action: none;
+      }
     </style>
   </head>
   <body>
@@ -68,6 +95,14 @@
       </div>
     </div>
     <div id="info"></div>
+
+    <!-- Mobile joystick controls -->
+    <div id="joystick-left" class="joystick-container">
+      <div class="joystick"></div>
+    </div>
+    <div id="joystick-right" class="joystick-container">
+      <div class="joystick"></div>
+    </div>
 
     <script>
       const CONFIG = {
@@ -159,6 +194,18 @@
       let repositories = []
       let paintingMeshes = []
       let spotifyTrack = null
+
+      let isMobile = false
+      let joystickRightX = 0
+      let joystickRightY = 0
+      let mobileYaw = 0
+      let mobilePitch = 0
+      const mobileLookSpeed = 1.3
+      const mobileMovementSpeedFactor = 1
+
+      if ('ontouchstart' in window) {
+        isMobile = true
+      }
 
       async function loadRepositories() {
         try {
@@ -289,77 +336,90 @@
 
         createPaintings()
 
-        controls = new THREE.PointerLockControls(camera, document.body)
+        if (!isMobile) {
+          controls = new THREE.PointerLockControls(camera, document.body)
 
-        const blocker = document.getElementById('blocker')
-        const instructions = document.getElementById('instructions')
+          const blocker = document.getElementById('blocker')
+          const instructions = document.getElementById('instructions')
 
-        instructions.addEventListener('click', function () {
-          controls.lock()
-        })
+          instructions.addEventListener('click', function () {
+            controls.lock()
+          })
 
-        controls.addEventListener('lock', function () {
-          instructions.style.display = 'none'
-          blocker.style.display = 'none'
+          controls.addEventListener('lock', function () {
+            instructions.style.display = 'none'
+            blocker.style.display = 'none'
 
-          controls
-            .getObject()
-            .position.set(cameraPos.x, cameraPos.y, cameraPos.z)
-        })
+            controls
+              .getObject()
+              .position.set(cameraPos.x, cameraPos.y, cameraPos.z)
+          })
 
-        controls.addEventListener('unlock', function () {
-          velocity.x = 0
-          velocity.z = 0
-          blocker.style.display = 'flex'
-          instructions.style.display = 'block'
-        })
+          controls.addEventListener('unlock', function () {
+            velocity.x = 0
+            velocity.z = 0
+            blocker.style.display = 'flex'
+            instructions.style.display = 'block'
+          })
 
-        scene.add(controls.getObject())
+          scene.add(controls.getObject())
 
-        const onKeyDown = function (event) {
-          switch (event.code) {
-            case 'ArrowUp':
-            case 'KeyW':
-              moveForward = true
-              break
-            case 'ArrowLeft':
-            case 'KeyA':
-              moveLeft = true
-              break
-            case 'ArrowDown':
-            case 'KeyS':
-              moveBackward = true
-              break
-            case 'ArrowRight':
-            case 'KeyD':
-              moveRight = true
-              break
+          const onKeyDown = function (event) {
+            switch (event.code) {
+              case 'ArrowUp':
+              case 'KeyW':
+                moveForward = true
+                break
+              case 'ArrowLeft':
+              case 'KeyA':
+                moveLeft = true
+                break
+              case 'ArrowDown':
+              case 'KeyS':
+                moveBackward = true
+                break
+              case 'ArrowRight':
+              case 'KeyD':
+                moveRight = true
+                break
+            }
           }
-        }
 
-        const onKeyUp = function (event) {
-          switch (event.code) {
-            case 'ArrowUp':
-            case 'KeyW':
-              moveForward = false
-              break
-            case 'ArrowLeft':
-            case 'KeyA':
-              moveLeft = false
-              break
-            case 'ArrowDown':
-            case 'KeyS':
-              moveBackward = false
-              break
-            case 'ArrowRight':
-            case 'KeyD':
-              moveRight = false
-              break
+          const onKeyUp = function (event) {
+            switch (event.code) {
+              case 'ArrowUp':
+              case 'KeyW':
+                moveForward = false
+                break
+              case 'ArrowLeft':
+              case 'KeyA':
+                moveLeft = false
+                break
+              case 'ArrowDown':
+              case 'KeyS':
+                moveBackward = false
+                break
+              case 'ArrowRight':
+              case 'KeyD':
+                moveRight = false
+                break
+            }
           }
-        }
 
-        document.addEventListener('keydown', onKeyDown)
-        document.addEventListener('keyup', onKeyUp)
+          document.addEventListener('keydown', onKeyDown)
+          document.addEventListener('keyup', onKeyUp)
+        } else {
+          document.getElementById('blocker').style.display = 'none'
+          document.getElementById('instructions').style.display = 'none'
+
+          document.getElementById('joystick-left').style.display = 'block'
+          document.getElementById('joystick-right').style.display = 'block'
+
+          mobileYaw = 0
+          mobilePitch = 0
+
+          initJoysticks()
+        }
 
         raycaster = new THREE.Raycaster()
 
@@ -719,85 +779,317 @@
       }
 
       function onMouseClick() {
-        if (controls.isLocked) {
-          raycaster.setFromCamera(new THREE.Vector2(), camera)
+        if (!isMobile && controls && controls.isLocked) {
+          handlePaintingRaycast()
+        } else if (isMobile) {
+          handlePaintingRaycast()
+        }
+      }
 
-          const intersects = raycaster.intersectObjects(paintingMeshes)
+      function handlePaintingRaycast() {
+        raycaster.setFromCamera(new THREE.Vector2(), camera)
+        const intersects = raycaster.intersectObjects(paintingMeshes)
 
-          if (intersects.length > 0) {
-            const object = intersects[0].object
+        if (intersects.length > 0) {
+          const object = intersects[0].object
 
-            cameraPos.x = controls.getObject().position.x
-            cameraPos.y = controls.getObject().position.y
-            cameraPos.z = controls.getObject().position.z
+          cameraPos.x = isMobile
+            ? camera.position.x
+            : controls.getObject().position.x
+          cameraPos.y = isMobile
+            ? camera.position.y
+            : controls.getObject().position.y
+          cameraPos.z = isMobile
+            ? camera.position.z
+            : controls.getObject().position.z
 
-            document.getElementById(
-              'info'
-            ).textContent = `Viewing: ${object.userData.name}`
+          document.getElementById(
+            'info'
+          ).textContent = `Viewing: ${object.userData.name}`
 
-            setTimeout(() => {
-              document.getElementById('info').textContent = ''
-            }, 2000)
+          setTimeout(() => {
+            document.getElementById('info').textContent = ''
+          }, 2000)
 
-            window.open(object.userData.url, '_blank')
+          window.open(object.userData.url, '_blank')
+        }
+      }
+
+      function initJoysticks() {
+        const leftEl = document.getElementById('joystick-left')
+        const rightEl = document.getElementById('joystick-right')
+
+        let leftTouchId = null
+        let leftCenter = { x: 0, y: 0 }
+        let rightTouchId = null
+        let rightCenter = { x: 0, y: 0 }
+        let lastRightTouchX = 0
+        let lastRightTouchY = 0
+
+        function handleTouchStart(e) {
+          e.preventDefault()
+          for (let touch of e.changedTouches) {
+            const rectLeft = leftEl.getBoundingClientRect()
+            const rectRight = rightEl.getBoundingClientRect()
+
+            if (
+              touch.pageX >= rectLeft.left &&
+              touch.pageX <= rectLeft.right &&
+              touch.pageY >= rectLeft.top &&
+              touch.pageY <= rectLeft.bottom
+            ) {
+              leftTouchId = touch.identifier
+              leftCenter = {
+                x: rectLeft.left + rectLeft.width / 2,
+                y: rectLeft.top + rectLeft.height / 2
+              }
+            } else if (
+              touch.pageX >= rectRight.left &&
+              touch.pageX <= rectRight.right &&
+              touch.pageY >= rectRight.top &&
+              touch.pageY <= rectRight.bottom
+            ) {
+              rightTouchId = touch.identifier
+              rightCenter = {
+                x: rectRight.left + rectRight.width / 2,
+                y: rectRight.top + rectRight.height / 2
+              }
+              lastRightTouchX = touch.pageX
+              lastRightTouchY = touch.pageY
+            }
           }
         }
+
+        function handleTouchMove(e) {
+          e.preventDefault()
+          for (let touch of e.changedTouches) {
+            if (touch.identifier === leftTouchId) {
+              const dx = touch.pageX - leftCenter.x
+              const dy = touch.pageY - leftCenter.y
+
+              moveForward = dy > 10
+              moveBackward = dy < -10
+              moveLeft = dx < -10
+              moveRight = dx > 10
+
+              const stick = leftEl.querySelector('.joystick')
+              if (stick) {
+                const maxDist = 30
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                const factor = dist > maxDist ? maxDist / dist : 1
+
+                stick.style.transform = `translate(${dx * factor}px, ${
+                  dy * factor
+                }px)`
+              }
+            } else if (touch.identifier === rightTouchId) {
+              const dx = touch.pageX - rightCenter.x
+              const dy = touch.pageY - rightCenter.y
+
+              const maxDist = 40
+              const deadzone = 5
+              const dist = Math.sqrt(dx * dx + dy * dy)
+
+              if (dist > deadzone) {
+                const normalizedDist = Math.min(
+                  1,
+                  (dist - deadzone) / (maxDist - deadzone)
+                )
+                joystickRightX = (dx / dist) * normalizedDist
+                joystickRightY = (dy / dist) * normalizedDist
+              } else {
+                joystickRightX = 0
+                joystickRightY = 0
+              }
+
+              const stick = rightEl.querySelector('.joystick')
+              if (stick) {
+                const visualFactor = dist > maxDist ? maxDist / dist : 1
+                stick.style.transform = `translate(${dx * visualFactor}px, ${
+                  dy * visualFactor
+                }px)`
+              }
+            }
+          }
+        }
+
+        function handleTouchEnd(e) {
+          e.preventDefault()
+          for (let touch of e.changedTouches) {
+            if (touch.identifier === leftTouchId) {
+              leftTouchId = null
+              moveForward = false
+              moveBackward = false
+              moveLeft = false
+              moveRight = false
+
+              const stick = leftEl.querySelector('.joystick')
+              if (stick) {
+                stick.style.transform = 'translate(0px, 0px)'
+              }
+            } else if (touch.identifier === rightTouchId) {
+              rightTouchId = null
+              joystickRightX = 0
+              joystickRightY = 0
+
+              const stick = rightEl.querySelector('.joystick')
+              if (stick) {
+                stick.style.transform = 'translate(0px, 0px)'
+              }
+            }
+          }
+        }
+
+        leftEl.addEventListener('touchstart', handleTouchStart, {
+          passive: false
+        })
+        leftEl.addEventListener('touchmove', handleTouchMove, {
+          passive: false
+        })
+        leftEl.addEventListener('touchend', handleTouchEnd, { passive: false })
+        leftEl.addEventListener('touchcancel', handleTouchEnd, {
+          passive: false
+        })
+
+        rightEl.addEventListener('touchstart', handleTouchStart, {
+          passive: false
+        })
+        rightEl.addEventListener('touchmove', handleTouchMove, {
+          passive: false
+        })
+        rightEl.addEventListener('touchend', handleTouchEnd, { passive: false })
+        rightEl.addEventListener('touchcancel', handleTouchEnd, {
+          passive: false
+        })
       }
 
       function animate() {
         requestAnimationFrame(animate)
 
-        if (controls.isLocked === true) {
-          const time = performance.now()
-          const delta = (time - prevTime) / 1000
+        const time = performance.now()
+        const delta = (time - prevTime) / 1000
 
-          velocity.x -= velocity.x * CONFIG.MOVEMENT.DECELERATION * delta
-          velocity.z -= velocity.z * CONFIG.MOVEMENT.DECELERATION * delta
+        velocity.x -= velocity.x * CONFIG.MOVEMENT.DECELERATION * delta
+        velocity.z -= velocity.z * CONFIG.MOVEMENT.DECELERATION * delta
 
-          direction.z = Number(moveForward) - Number(moveBackward)
-          direction.x = Number(moveRight) - Number(moveLeft)
-          direction.normalize()
+        direction.z = Number(moveForward) - Number(moveBackward)
+        direction.x = Number(moveRight) - Number(moveLeft)
+        direction.normalize()
 
-          if (moveForward || moveBackward)
-            velocity.z -= direction.z * CONFIG.MOVEMENT.SPEED * delta
-          if (moveLeft || moveRight)
-            velocity.x -= direction.x * CONFIG.MOVEMENT.SPEED * delta
+        if (moveForward || moveBackward)
+          velocity.z -= direction.z * CONFIG.MOVEMENT.SPEED * delta
+        if (moveLeft || moveRight)
+          velocity.x -= direction.x * CONFIG.MOVEMENT.SPEED * delta
 
-          controls.moveRight(-velocity.x * delta)
-          controls.moveForward(-velocity.z * delta)
+        if (!isMobile) {
+          if (controls && controls.isLocked === true) {
+            controls.moveRight(-velocity.x * delta)
+            controls.moveForward(-velocity.z * delta)
 
-          if (
-            controls.getObject().position.x <
-            -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          )
-            controls.getObject().position.x =
+            if (
+              controls.getObject().position.x <
               -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (
-            controls.getObject().position.x >
-            CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          )
-            controls.getObject().position.x =
+            )
+              controls.getObject().position.x =
+                -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            if (
+              controls.getObject().position.x >
               CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (
-            controls.getObject().position.z <
-            -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          )
-            controls.getObject().position.z =
+            )
+              controls.getObject().position.x =
+                CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            if (
+              controls.getObject().position.z <
               -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (
-            controls.getObject().position.z >
-            CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          )
-            controls.getObject().position.z =
+            )
+              controls.getObject().position.z =
+                -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            if (
+              controls.getObject().position.z >
               CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            )
+              controls.getObject().position.z =
+                CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
 
-          cameraPos.x = controls.getObject().position.x
-          cameraPos.y = controls.getObject().position.y
-          cameraPos.z = controls.getObject().position.z
+            cameraPos.x = controls.getObject().position.x
+            cameraPos.y = controls.getObject().position.y
+            cameraPos.z = controls.getObject().position.z
+          }
+        } else {
+          const forward = new THREE.Vector3(
+            Math.sin(mobileYaw),
+            0,
+            Math.cos(mobileYaw)
+          )
 
-          prevTime = time
+          const right = new THREE.Vector3(
+            Math.sin(mobileYaw + Math.PI / 2),
+            0,
+            Math.cos(mobileYaw + Math.PI / 2)
+          )
+
+          if (moveForward || moveBackward) {
+            camera.position.x -=
+              forward.x * velocity.z * delta * mobileMovementSpeedFactor
+            camera.position.z -=
+              forward.z * velocity.z * delta * mobileMovementSpeedFactor
+          }
+
+          if (moveLeft || moveRight) {
+            camera.position.x -=
+              right.x * velocity.x * delta * mobileMovementSpeedFactor
+            camera.position.z -=
+              right.z * velocity.x * delta * mobileMovementSpeedFactor
+          }
+
+          if (
+            camera.position.x <
+            -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.x =
+              -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+          if (
+            camera.position.x >
+            CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.x =
+              CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+          if (
+            camera.position.z <
+            -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.z =
+              -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+          if (
+            camera.position.z >
+            CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.z =
+              CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+
+          mobileYaw -= joystickRightX * mobileLookSpeed * delta
+
+          mobilePitch -= joystickRightY * mobileLookSpeed * delta
+
+          mobilePitch = Math.max(
+            -Math.PI / 2 + 0.01,
+            Math.min(Math.PI / 2 - 0.01, mobilePitch)
+          )
+
+          camera.rotation.set(0, 0, 0)
+          camera.rotateY(mobileYaw)
+          camera.rotateX(mobilePitch)
+
+          cameraPos.x = camera.position.x
+          cameraPos.y = camera.position.y
+          cameraPos.z = camera.position.z
         }
 
+        prevTime = time
         renderer.render(scene, camera)
       }
 
