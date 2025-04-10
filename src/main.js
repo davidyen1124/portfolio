@@ -179,17 +179,13 @@ function animate(controls, moveState) {
   velocity.x -= velocity.x * CONFIG.MOVEMENT.DECELERATION * delta;
   velocity.z -= velocity.z * CONFIG.MOVEMENT.DECELERATION * delta;
   
-  direction.z = Number(moveState.getMoveForward ? moveState.getMoveForward() : moveState.moveForward) - 
-                Number(moveState.getMoveBackward ? moveState.getMoveBackward() : moveState.moveBackward);
-  direction.x = Number(moveState.getMoveRight ? moveState.getMoveRight() : moveState.moveRight) - 
-                Number(moveState.getMoveLeft ? moveState.getMoveLeft() : moveState.moveLeft);
+  direction.z = Number(moveState.getMoveForward()) - Number(moveState.getMoveBackward());
+  direction.x = Number(moveState.getMoveRight()) - Number(moveState.getMoveLeft());
   direction.normalize();
   
-  if (moveState.getMoveForward ? moveState.getMoveForward() : moveState.moveForward || 
-      moveState.getMoveBackward ? moveState.getMoveBackward() : moveState.moveBackward)
+  if (moveState.getMoveForward() || moveState.getMoveBackward())
     velocity.z -= direction.z * CONFIG.MOVEMENT.SPEED * delta;
-  if (moveState.getMoveLeft ? moveState.getMoveLeft() : moveState.moveLeft || 
-      moveState.getMoveRight ? moveState.getMoveRight() : moveState.moveRight)
+  if (moveState.getMoveLeft() || moveState.getMoveRight())
     velocity.x -= direction.x * CONFIG.MOVEMENT.SPEED * delta;
   
   if (!isMobile) {
@@ -227,10 +223,10 @@ function animate(controls, moveState) {
       cameraPos.z = controls.object.position.z;
     }
   } else {
-    const mobileYaw = moveState.getMobileYaw ? moveState.getMobileYaw() : moveState.mobileYaw;
-    const mobilePitch = moveState.getMobilePitch ? moveState.getMobilePitch() : moveState.mobilePitch;
-    const joystickRightX = moveState.getJoystickRightX ? moveState.getJoystickRightX() : moveState.joystickRightX;
-    const joystickRightY = moveState.getJoystickRightY ? moveState.getJoystickRightY() : moveState.joystickRightY;
+    const mobileYaw = moveState.getMobileYaw();
+    const mobilePitch = moveState.getMobilePitch();
+    const joystickRightX = moveState.getJoystickRightX();
+    const joystickRightY = moveState.getJoystickRightY();
     
     const forward = new THREE.Vector3(
       Math.sin(mobileYaw),
@@ -244,16 +240,14 @@ function animate(controls, moveState) {
       Math.cos(mobileYaw + Math.PI / 2)
     );
     
-    if (moveState.getMoveForward ? moveState.getMoveForward() : moveState.moveForward || 
-        moveState.getMoveBackward ? moveState.getMoveBackward() : moveState.moveBackward) {
+    if (moveState.getMoveForward() || moveState.getMoveBackward()) {
       camera.position.x -=
         forward.x * velocity.z * delta * mobileMovementSpeedFactor;
       camera.position.z -=
         forward.z * velocity.z * delta * mobileMovementSpeedFactor;
     }
     
-    if (moveState.getMoveLeft ? moveState.getMoveLeft() : moveState.moveLeft || 
-        moveState.getMoveRight ? moveState.getMoveRight() : moveState.moveRight) {
+    if (moveState.getMoveLeft() || moveState.getMoveRight()) {
       camera.position.x -=
         right.x * velocity.x * delta * mobileMovementSpeedFactor;
       camera.position.z -=
@@ -289,18 +283,14 @@ function animate(controls, moveState) {
         CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET;
     }
     
-    if (moveState.setMobileYaw) {
-      moveState.setMobileYaw(mobileYaw - joystickRightX * mobileLookSpeed * delta);
-    }
+    moveState.setMobileYaw(mobileYaw - joystickRightX * mobileLookSpeed * delta);
     
-    if (moveState.setMobilePitch) {
-      let newPitch = mobilePitch - joystickRightY * mobileLookSpeed * delta;
-      newPitch = Math.max(
-        -Math.PI / 2 + 0.01,
-        Math.min(Math.PI / 2 - 0.01, newPitch)
-      );
-      moveState.setMobilePitch(newPitch);
-    }
+    let newPitch = mobilePitch - joystickRightY * mobileLookSpeed * delta;
+    newPitch = Math.max(
+      -Math.PI / 2 + 0.01,
+      Math.min(Math.PI / 2 - 0.01, newPitch)
+    );
+    moveState.setMobilePitch(newPitch);
     
     camera.rotation.set(0, 0, 0);
     camera.rotateY(mobileYaw);
