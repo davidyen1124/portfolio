@@ -243,18 +243,26 @@ function animate(controls, moveState) {
       Math.cos(mobileYaw + Math.PI / 2)
     );
     
-    if (moveState.getMoveForward() || moveState.getMoveBackward()) {
-      camera.position.x -=
-        forward.x * velocity.z * delta * mobileMovementSpeedFactor;
-      camera.position.z -=
-        forward.z * velocity.z * delta * mobileMovementSpeedFactor;
+    const mobileSpeed = CONFIG.MOVEMENT.SPEED * delta * mobileMovementSpeedFactor;
+    
+    if (moveState.getMoveForward()) {
+      camera.position.x -= forward.x * mobileSpeed;
+      camera.position.z -= forward.z * mobileSpeed;
     }
     
-    if (moveState.getMoveLeft() || moveState.getMoveRight()) {
-      camera.position.x -=
-        right.x * velocity.x * delta * mobileMovementSpeedFactor;
-      camera.position.z -=
-        right.z * velocity.x * delta * mobileMovementSpeedFactor;
+    if (moveState.getMoveBackward()) {
+      camera.position.x += forward.x * mobileSpeed;
+      camera.position.z += forward.z * mobileSpeed;
+    }
+    
+    if (moveState.getMoveLeft()) {
+      camera.position.x -= right.x * mobileSpeed;
+      camera.position.z -= right.z * mobileSpeed;
+    }
+    
+    if (moveState.getMoveRight()) {
+      camera.position.x += right.x * mobileSpeed;
+      camera.position.z += right.z * mobileSpeed;
     }
     
     if (
