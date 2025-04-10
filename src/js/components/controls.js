@@ -27,7 +27,7 @@ export function setupDesktopControls(camera, scene) {
     instructions.style.display = 'block';
   });
   
-  scene.add(controls.getObject());
+  scene.add(controls.object);
   
   const onKeyDown = function (event) {
     switch (event.code) {

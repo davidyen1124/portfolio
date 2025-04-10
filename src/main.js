@@ -48,7 +48,7 @@ async function init() {
     moveState = desktopSetup.moveState;
     
     controls.addEventListener('lock', function () {
-      controls.getObject().position.set(cameraPos.x, cameraPos.y, cameraPos.z);
+      controls.object.position.set(cameraPos.x, cameraPos.y, cameraPos.z);
     });
   } else {
     const mobileSetup = setupMobileControls();
@@ -161,13 +161,13 @@ function handlePaintingRaycast() {
     
     cameraPos.x = isMobile
       ? camera.position.x
-      : controls.getObject().position.x;
+      : controls.object.position.x;
     cameraPos.y = isMobile
       ? camera.position.y
-      : controls.getObject().position.y;
+      : controls.object.position.y;
     cameraPos.z = isMobile
       ? camera.position.z
-      : controls.getObject().position.z;
+      : controls.object.position.z;
     
     window.open(object.userData.url, '_blank');
   }
@@ -197,33 +197,33 @@ function animate(controls, moveState) {
       controls.moveForward(-velocity.z * delta);
       
       if (
-        controls.getObject().position.x <
+        controls.object.position.x <
         -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.x =
+        controls.object.position.x =
           -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET;
       if (
-        controls.getObject().position.x >
+        controls.object.position.x >
         CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.x =
+        controls.object.position.x =
           CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET;
       if (
-        controls.getObject().position.z <
+        controls.object.position.z <
         -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.z =
+        controls.object.position.z =
           -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET;
       if (
-        controls.getObject().position.z >
+        controls.object.position.z >
         CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.z =
+        controls.object.position.z =
           CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET;
       
-      cameraPos.x = controls.getObject().position.x;
-      cameraPos.y = controls.getObject().position.y;
-      cameraPos.z = controls.getObject().position.z;
+      cameraPos.x = controls.object.position.x;
+      cameraPos.y = controls.object.position.y;
+      cameraPos.z = controls.object.position.z;
     }
   } else {
     const mobileYaw = moveState.getMobileYaw();
