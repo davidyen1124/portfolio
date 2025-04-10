@@ -81,10 +81,18 @@ export function setupDesktopControls(camera, scene) {
       getMoveBackward: () => moveBackward,
       getMoveLeft: () => moveLeft,
       getMoveRight: () => moveRight,
+      getJoystickRightX: () => 0,
+      getJoystickRightY: () => 0,
+      getMobileYaw: () => 0,
+      getMobilePitch: () => 0,
       setMoveForward: (value) => { moveForward = value; },
       setMoveBackward: (value) => { moveBackward = value; },
       setMoveLeft: (value) => { moveLeft = value; },
-      setMoveRight: (value) => { moveRight = value; }
+      setMoveRight: (value) => { moveRight = value; },
+      setJoystickRightX: () => {},
+      setJoystickRightY: () => {},
+      setMobileYaw: () => {},
+      setMobilePitch: () => {}
     }
   };
 }
