@@ -53,6 +53,9 @@ async function init() {
   } else {
     const mobileSetup = setupMobileControls();
     moveState = mobileSetup.moveState;
+    
+    moveState.setMobileYaw(0);
+    moveState.setMobilePitch(0);
   }
   
   raycaster = new THREE.Raycaster();
