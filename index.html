@@ -642,7 +642,15 @@
         }
       }
 
-      function createPainting(data, x, y, z, rotation, isSpotify = false, isResume = false) {
+      function createPainting(
+        data,
+        x,
+        y,
+        z,
+        rotation,
+        isSpotify = false,
+        isResume = false
+      ) {
         const frameGeometry = new THREE.BoxGeometry(
           CONFIG.PAINTING.WIDTH + 0.2,
           CONFIG.PAINTING.HEIGHT + 0.2,
@@ -806,7 +814,7 @@
           emissiveMap: texture
         })
 
-       const painting = new THREE.Mesh(paintingGeometry, paintingMaterial)
+        const painting = new THREE.Mesh(paintingGeometry, paintingMaterial)
         painting.castShadow = true
         painting.receiveShadow = true
         painting.position.set(x, y, z)
