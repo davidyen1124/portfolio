@@ -11,7 +11,7 @@ Behold, a groundbreaking innovation in personal portfolio presentation! Instead 
 1. **WASD/Arrow Keys** - For those cultured enough to know how to walk
 2. **Mouse** - Wave it around like you're conducting an orchestra
 3. **Click** - To interact with the exhibits (yes, you're actually allowed to touch these)
-4. **Paintings** - They're not NFTs, I promise. Click them to see the actual GitHub repos
+4. **Paintings** - They're not NFTs, I promise. Click them to interact
 
 ## 🎵 Special Exhibition
 
