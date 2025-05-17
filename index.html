@@ -414,6 +414,7 @@
       class ResumePainting extends Painting {
         drawContent(context) {
           const section = this.data
+          context.font = '18px Arial'
           const lines = wrapTextLines(
             context,
             section.text,
