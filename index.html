@@ -472,18 +472,26 @@
 
       async function loadRepositories() {
         try {
-          const repoResponse = await fetch(
+          const repoPromise = fetch(
             'https://api.github.com/users/davidyen1124/repos?sort=updated&per_page=20'
+          ).then((res) => res.json())
+          const spotifyPromise = fetch(
+            'https://spotify.daviddennislinda.com/api/recently-played'
           )
-          repositories = await repoResponse.json()
+            .then((res) => res.json())
+            .catch((spotifyError) => {
+              console.error('Error loading Spotify data:', spotifyError)
+              return null
+            })
 
-          try {
-            const spotifyResponse = await fetch(
-              'https://spotify.daviddennislinda.com/api/recently-played'
-            )
-            spotifyTrack = await spotifyResponse.json()
-          } catch (spotifyError) {
-            console.error('Error loading Spotify data:', spotifyError)
+          const [repoData, spotifyData] = await Promise.all([
+            repoPromise,
+            spotifyPromise
+          ])
+
+          repositories = repoData
+          if (spotifyData) {
+            spotifyTrack = spotifyData
           }
 
           if (repositories.length > 0) {
