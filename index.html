@@ -575,13 +575,20 @@
           if (paintingsOnThisWall <= 0) continue
 
           const totalGapSpace = wallLength - paintingsOnThisWall * paintingWidth
-          const spaceBetween = totalGapSpace / (paintingsOnThisWall + 1)
+          let spaceBetween = totalGapSpace / (paintingsOnThisWall + 1)
+          spaceBetween = Math.max(spaceBetween, CONFIG.PAINTING.MIN_SPACING)
+
+          const used =
+            paintingWidth * paintingsOnThisWall +
+            spaceBetween * (paintingsOnThisWall + 1)
+          const startOffset = (wallLength - used) / 2
 
           for (let i = 0; i < paintingsOnThisWall; i++) {
             const painting = allPaintings[paintingCounter++]
 
             const positionOnWall =
               -CONFIG.ROOM_SIZE +
+              startOffset +
               spaceBetween +
               (paintingWidth + spaceBetween) * i
 
