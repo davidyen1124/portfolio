@@ -184,6 +184,27 @@
       let paintingMeshes = []
       let spotifyTrack = null
 
+      const resumeSections = [
+        {
+          isResume: true,
+          title: 'Experience',
+          text: 'Over 5 years building web applications.',
+          url: 'resume.pdf'
+        },
+        {
+          isResume: true,
+          title: 'Education',
+          text: 'B.S. in Computer Science from Example University.',
+          url: 'resume.pdf'
+        },
+        {
+          isResume: true,
+          title: 'Skills',
+          text: 'JavaScript, Python, C++, and more.',
+          url: 'resume.pdf'
+        }
+      ]
+
       let isMobile = false
       let joystickRightX = 0
       let joystickRightY = 0
@@ -514,10 +535,10 @@
       }
 
       function createPaintings() {
-        const allPaintings = [...repositories]
+        const allPaintings = [...resumeSections, ...repositories]
 
         if (spotifyTrack) {
-          allPaintings.splice(1, 0, {
+          allPaintings.splice(resumeSections.length, 0, {
             isSpotify: true,
             spotifyData: spotifyTrack
           })
@@ -586,6 +607,16 @@
                 rotation,
                 true
               )
+            } else if (painting.isResume) {
+              createPainting(
+                painting,
+                x,
+                CONFIG.PAINTING.ELEVATION,
+                z,
+                rotation,
+                false,
+                true
+              )
             } else {
               createPainting(
                 painting,
@@ -599,7 +630,7 @@
         }
       }
 
-      function createPainting(data, x, y, z, rotation, isSpotify = false) {
+      function createPainting(data, x, y, z, rotation, isSpotify = false, isResume = false) {
         const frameGeometry = new THREE.BoxGeometry(
           CONFIG.PAINTING.WIDTH + 0.2,
           CONFIG.PAINTING.HEIGHT + 0.2,
@@ -668,6 +699,23 @@
           }
 
           albumArt.src = track.albumArt
+        } else if (isResume) {
+          const section = data
+
+          context.fillStyle = CONFIG.COLORS.TEXT
+          context.font = 'bold 32px Arial'
+          context.textAlign = 'center'
+          context.fillText(section.title, canvas.width / 2, 50)
+
+          context.font = '18px Arial'
+          wrapText(
+            context,
+            section.text,
+            canvas.width / 2,
+            100,
+            canvas.width - 40,
+            25
+          )
         } else {
           const repo = data
 
@@ -764,6 +812,13 @@
             name: `${data.name} by ${data.artists}`,
             originalMaterial: paintingMaterial.clone(),
             isSpotify: true
+          }
+        } else if (isResume) {
+          painting.userData = {
+            url: data.url,
+            name: data.title,
+            originalMaterial: paintingMaterial.clone(),
+            isResume: true
           }
         } else {
           painting.userData = {
