@@ -22,6 +22,7 @@ Keep an eye out for the special Spotify exhibit! It's like those audio guides at
 - Fully immersive 3D experience (because 2D is so last century)
 - Real-time GitHub repository displays (yes, I'm showing off)
 - Spotify integration (because every gallery needs a soundtrack)
+- Résumé sections displayed right on the gallery walls
 - Fancy lighting (to make my code look better than it actually is)
 - No gift shop (sorry, not sorry)
 
