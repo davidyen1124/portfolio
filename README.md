@@ -1,5 +1,7 @@
 # 🏛️ Welcome to My Personal Code Museum
 
+[![GitHub Repo stars](https://img.shields.io/github/stars/davidyen1124/portfolio?style=social)](https://github.com/davidyen1124/portfolio) [![GitHub forks](https://img.shields.io/github/forks/davidyen1124/portfolio?style=social)](https://github.com/davidyen1124/portfolio/fork) [![GitHub watchers](https://img.shields.io/github/watchers/davidyen1124/portfolio?style=social)](https://github.com/davidyen1124/portfolio) [![GitHub issues](https://img.shields.io/github/issues/davidyen1124/portfolio)](https://github.com/davidyen1124/portfolio/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/davidyen1124/portfolio)](https://github.com/davidyen1124/portfolio/pulls) [![GitHub last commit](https://img.shields.io/github/last-commit/davidyen1124/portfolio)](https://github.com/davidyen1124/portfolio/commits/main) [![GitHub license](https://img.shields.io/github/license/davidyen1124/portfolio)](./LICENSE)
+
 _Please maintain complete silence in the gallery. No running, no food, and absolutely no touching the exhibits with your grubby little fingers._
 
 ## 🎨 What's This Masterpiece?
