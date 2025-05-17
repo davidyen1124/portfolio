@@ -777,21 +777,18 @@
         // Adjust repository list so each wall has the same number of paintings
         // and spacing meets the minimum requirement
         while (true) {
-          let allPaintings = [...resumeSections, ...repositories]
-          if (spotifyTrack) {
-            allPaintings.splice(resumeSections.length, 0, {
-              isSpotify: true,
-              spotifyData: spotifyTrack
-            })
-          }
+          const totalPaintings =
+            resumeSections.length +
+            repositories.length +
+            (spotifyTrack ? 1 : 0)
 
-          if (allPaintings.length % wallCount !== 0) {
-            const removeCount = allPaintings.length % wallCount
+          if (totalPaintings % wallCount !== 0) {
+            const removeCount = totalPaintings % wallCount
             repositories.splice(-removeCount)
             continue
           }
 
-          const perWall = allPaintings.length / wallCount
+          const perWall = totalPaintings / wallCount
           const spacing =
             (availableLength - paintingWidth * perWall) / (perWall + 1)
 
@@ -803,15 +800,19 @@
           break
         }
 
-        let allPaintings = [...resumeSections, ...repositories]
+        const basePaintings = [...resumeSections, ...repositories]
+        let allPaintings = [...basePaintings]
+        const paintingsPerWall =
+          (basePaintings.length + (spotifyTrack ? 1 : 0)) / wallCount
+
         if (spotifyTrack) {
-          allPaintings.splice(resumeSections.length, 0, {
+          const centerIndex = Math.floor(paintingsPerWall / 2)
+          allPaintings.splice(centerIndex, 0, {
             isSpotify: true,
             spotifyData: spotifyTrack
           })
         }
 
-        const paintingsPerWall = allPaintings.length / wallCount
         const spaceBetween =
           (availableLength - paintingWidth * paintingsPerWall) /
           (paintingsPerWall + 1)
