@@ -729,20 +729,32 @@
         } else if (isResume) {
           const section = data
 
+          const lines = wrapTextLines(
+            context,
+            section.text,
+            canvas.width - 40,
+            25,
+            5
+          )
+
+          const titleHeight = 32
+          const gapAfterTitle = 20
+          const totalHeight = titleHeight + gapAfterTitle + lines.length * 25
+          const startY = (canvas.height - totalHeight) / 2
+
           context.fillStyle = CONFIG.COLORS.TEXT
           context.font = 'bold 32px Arial'
           context.textAlign = 'center'
-          context.fillText(section.title, canvas.width / 2, 50)
+          context.textBaseline = 'top'
+          context.fillText(section.title, canvas.width / 2, startY)
 
           context.font = '18px Arial'
-          wrapText(
-            context,
-            section.text,
-            canvas.width / 2,
-            100,
-            canvas.width - 40,
-            25
-          )
+          let y = startY + titleHeight + gapAfterTitle
+          for (const line of lines) {
+            context.fillText(line, canvas.width / 2, y)
+            y += 25
+          }
+          context.textBaseline = 'alphabetic'
         } else {
           const repo = data
 
@@ -889,6 +901,32 @@
         }
 
         context.fillText(line, x, y)
+      }
+
+      function wrapTextLines(context, text, maxWidth, lineHeight, maxLines) {
+        const words = text.split(' ')
+        let line = ''
+        const lines = []
+
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' '
+          const metrics = context.measureText(testLine)
+          const testWidth = metrics.width
+
+          if (testWidth > maxWidth && n > 0) {
+            lines.push(line.trim())
+            line = words[n] + ' '
+            if (lines.length >= maxLines) {
+              lines[lines.length - 1] += '...'
+              return lines
+            }
+          } else {
+            line = testLine
+          }
+        }
+
+        lines.push(line.trim())
+        return lines
       }
 
       function onWindowResize() {
