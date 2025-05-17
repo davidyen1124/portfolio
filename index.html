@@ -182,13 +182,24 @@
       const cameraPos = { x: 0, y: 1.7, z: 0 }
 
       let isDemoMode = false
-      const demoDir = new THREE.Vector2()
-      let demoTimer = 0
+      let demoIndex = 0
+      let demoTarget = null
+      let demoLookAt = null
+      let demoPause = 0
 
-      function setRandomDemoDirection() {
-        const angle = Math.random() * Math.PI * 2
-        demoDir.set(Math.sin(angle), Math.cos(angle))
-        demoTimer = 2 + Math.random() * 3
+
+      function setNextDemoTarget() {
+        if (paintingMeshes.length === 0) return
+        const painting = paintingMeshes[demoIndex % paintingMeshes.length]
+        const offset = new THREE.Vector3(
+          Math.sin(painting.rotation.y),
+          0,
+          Math.cos(painting.rotation.y)
+        ).multiplyScalar(3)
+        demoTarget = painting.position.clone().add(offset)
+        demoTarget.y = cameraPos.y
+        demoLookAt = painting.position.clone()
+        demoIndex++
       }
 
       let repositories = []
@@ -450,7 +461,9 @@
               case 'KeyM':
                 isDemoMode = !isDemoMode
                 if (isDemoMode) {
-                  setRandomDemoDirection()
+                  demoIndex = 0
+                  demoPause = 0
+                  setNextDemoTarget()
                   moveForward = moveBackward = moveLeft = moveRight = false
                   velocity.x = 0
                   velocity.z = 0
@@ -1223,43 +1236,33 @@
       }
 
       function updateDemo(delta) {
-        demoTimer -= delta
-        if (demoTimer <= 0) setRandomDemoDirection()
-        const speed = CONFIG.MOVEMENT.SPEED * 0.5
+        const obj = !isMobile
+          ? controls && controls.isLocked
+            ? controls.getObject()
+            : camera
+          : camera
 
-        if (!isMobile) {
-          const obj = controls && controls.isLocked ? controls.getObject() : camera
-          obj.position.x -= demoDir.x * speed * delta
-          obj.position.z -= demoDir.y * speed * delta
+        const speed = CONFIG.MOVEMENT.SPEED * 0.2
 
-          if (obj.position.x < -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            obj.position.x = -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (obj.position.x > CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            obj.position.x = CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (obj.position.z < -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            obj.position.z = -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (obj.position.z > CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            obj.position.z = CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+        if (!demoTarget) setNextDemoTarget()
 
+        if (demoPause > 0) {
+          demoPause -= delta
+        } else if (demoTarget) {
+          const dir = new THREE.Vector3().subVectors(demoTarget, obj.position)
+          const distance = dir.length()
+          if (distance < 0.1) {
+            demoPause = 2
+            setNextDemoTarget()
+          } else {
+            dir.normalize()
+            obj.position.addScaledVector(dir, Math.min(speed * delta, distance))
+          }
+
+          obj.lookAt(demoLookAt)
           cameraPos.x = obj.position.x
           cameraPos.y = obj.position.y
           cameraPos.z = obj.position.z
-        } else {
-          camera.position.x -= demoDir.x * speed * delta
-          camera.position.z -= demoDir.y * speed * delta
-
-          if (camera.position.x < -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            camera.position.x = -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (camera.position.x > CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            camera.position.x = CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (camera.position.z < -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            camera.position.z = -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
-          if (camera.position.z > CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET)
-            camera.position.z = CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
-
-          cameraPos.x = camera.position.x
-          cameraPos.y = camera.position.y
-          cameraPos.z = camera.position.z
         }
       }
       if (isDemoMode) updateDemo(delta)
