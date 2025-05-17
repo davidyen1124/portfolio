@@ -547,8 +547,42 @@
       }
 
       function createPaintings() {
-        const allPaintings = [...resumeSections, ...repositories]
+        const wallCount = 4
+        const wallLength = CONFIG.ROOM_SIZE * 2
+        const paintingWidth = CONFIG.PAINTING.WIDTH
+        const wallOffset = CONFIG.PAINTING.WALL_OFFSET
+        const availableLength = wallLength
 
+        // Adjust repository list so each wall has the same number of paintings
+        // and spacing meets the minimum requirement
+        while (true) {
+          let allPaintings = [...resumeSections, ...repositories]
+          if (spotifyTrack) {
+            allPaintings.splice(resumeSections.length, 0, {
+              isSpotify: true,
+              spotifyData: spotifyTrack
+            })
+          }
+
+          if (allPaintings.length % wallCount !== 0) {
+            const removeCount = allPaintings.length % wallCount
+            repositories.splice(-removeCount)
+            continue
+          }
+
+          const perWall = allPaintings.length / wallCount
+          const spacing =
+            (availableLength - paintingWidth * perWall) / (perWall + 1)
+
+          if (spacing < CONFIG.PAINTING.MIN_SPACING && repositories.length > 0) {
+            repositories.pop()
+            continue
+          }
+
+          break
+        }
+
+        let allPaintings = [...resumeSections, ...repositories]
         if (spotifyTrack) {
           allPaintings.splice(resumeSections.length, 0, {
             isSpotify: true,
@@ -556,63 +590,42 @@
           })
         }
 
-        const totalPaintings = allPaintings.length
-        const wallCount = 4
+        const paintingsPerWall = allPaintings.length / wallCount
+        const spaceBetween =
+          (availableLength - paintingWidth * paintingsPerWall) /
+          (paintingsPerWall + 1)
 
-        const baseCountPerWall = Math.floor(totalPaintings / wallCount)
-        const remainder = totalPaintings % wallCount
+        const firstCenter =
+          -CONFIG.ROOM_SIZE + spaceBetween + paintingWidth / 2
 
-        const wallLength = CONFIG.ROOM_SIZE * 2
-        const paintingWidth = CONFIG.PAINTING.WIDTH
-        const wallOffset = CONFIG.PAINTING.WALL_OFFSET
-
-        let paintingCounter = 0
+        let index = 0
 
         for (let wallIndex = 0; wallIndex < wallCount; wallIndex++) {
-          const paintingsOnThisWall =
-            baseCountPerWall + (wallIndex < remainder ? 1 : 0)
-
-          if (paintingsOnThisWall <= 0) continue
-
-          const totalGapSpace = wallLength - paintingsOnThisWall * paintingWidth
-          let spaceBetween = totalGapSpace / (paintingsOnThisWall + 1)
-          spaceBetween = Math.max(spaceBetween, CONFIG.PAINTING.MIN_SPACING)
-
-          const used =
-            paintingWidth * paintingsOnThisWall +
-            spaceBetween * (paintingsOnThisWall + 1)
-          const startOffset = (wallLength - used) / 2
-
-          for (let i = 0; i < paintingsOnThisWall; i++) {
-            const painting = allPaintings[paintingCounter++]
-
-            const positionOnWall =
-              -CONFIG.ROOM_SIZE +
-              startOffset +
-              spaceBetween +
-              (paintingWidth + spaceBetween) * i
+          for (let i = 0; i < paintingsPerWall; i++) {
+            const painting = allPaintings[index++]
+            const pos = firstCenter + i * (paintingWidth + spaceBetween)
 
             let x, z, rotation
 
             switch (wallIndex) {
               case 0:
-                x = positionOnWall
+                x = pos
                 z = -CONFIG.ROOM_SIZE + wallOffset
                 rotation = 0
                 break
               case 1:
                 x = CONFIG.ROOM_SIZE - wallOffset
-                z = positionOnWall
+                z = pos
                 rotation = -Math.PI / 2
                 break
               case 2:
-                x = positionOnWall
+                x = pos
                 z = CONFIG.ROOM_SIZE - wallOffset
                 rotation = Math.PI
                 break
               case 3:
                 x = -CONFIG.ROOM_SIZE + wallOffset
-                z = positionOnWall
+                z = pos
                 rotation = Math.PI / 2
                 break
             }
