@@ -12,6 +12,7 @@ Behold, a groundbreaking innovation in personal portfolio presentation! Instead 
 2. **Mouse** - Wave it around like you're conducting an orchestra
 3. **Click** - To interact with the exhibits (yes, you're actually allowed to touch these)
 4. **Paintings** - They're not NFTs, I promise. Click them to see the actual GitHub repos
+5. **Press `M`** - Toggle the demo mode and let the camera wander around on its own
 
 ## 🎵 Special Exhibition
 
@@ -25,6 +26,7 @@ Keep an eye out for the special Spotify exhibit! It's like those audio guides at
 - Résumé sections displayed right on the gallery walls
 - Fancy lighting (to make my code look better than it actually is)
 - No gift shop (sorry, not sorry)
+- Demo mode (press `M`) so you can watch it like a screen saver
 
 ## 🏃‍♂️ Quick Start
 
