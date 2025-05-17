@@ -1,0 +1,1014 @@
+import { wrapText, wrapTextLines } from "./utils.js";
+import { resumeSections } from "./resumeData.js";
+import { CONFIG } from "./config.js";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
+import * as THREE from "three";
+
+
+      let camera, scene, renderer, controls
+      let moveForward = false
+      let moveBackward = false
+      let moveLeft = false
+      let moveRight = false
+      let prevTime = performance.now()
+      const velocity = new THREE.Vector3()
+      const direction = new THREE.Vector3()
+      let raycaster
+      let flashlight
+      const cameraPos = { x: 0, y: 1.7, z: 0 }
+
+      let repositories = []
+      let paintingMeshes = []
+      let spotifyTrack = null
+
+      let joystickRightY = 0
+      let mobileYaw = 0
+      let mobilePitch = 0
+      const mobileLookSpeed = 1.3
+      const mobileMovementSpeedFactor = 1
+
+      if ('ontouchstart' in window) {
+        isMobile = true
+      }
+
+      class Painting {
+        constructor(data, x, y, z, rotation) {
+          this.data = data
+          this.x = x
+          this.y = y
+          this.z = z
+          this.rotation = rotation
+        }
+
+        drawContent(context, texture) {}
+
+        getUserData(material) {
+          return { originalMaterial: material.clone() }
+        }
+
+        create() {
+          const frameGeometry = new THREE.BoxGeometry(
+            CONFIG.PAINTING.WIDTH + 0.2,
+            CONFIG.PAINTING.HEIGHT + 0.2,
+            CONFIG.PAINTING.FRAME_THICKNESS
+          )
+          const frameMaterial = new THREE.MeshStandardMaterial({
+            color: CONFIG.COLORS.FRAME,
+            roughness: 0.4,
+            metalness: 0.7
+          })
+          const frame = new THREE.Mesh(frameGeometry, frameMaterial)
+          frame.castShadow = true
+          frame.receiveShadow = true
+          frame.position.set(this.x, this.y, this.z)
+          frame.rotation.y = this.rotation
+          scene.add(frame)
+
+          const canvas = document.createElement('canvas')
+          canvas.width = CONFIG.PAINTING.CANVAS_WIDTH
+          canvas.height = CONFIG.PAINTING.CANVAS_HEIGHT
+          const context = canvas.getContext('2d')
+          context.fillStyle = CONFIG.COLORS.BACKGROUND_DARK
+          context.fillRect(0, 0, canvas.width, canvas.height)
+          const texture = new THREE.CanvasTexture(canvas)
+          this.drawContent(context, texture)
+
+          const paintingGeometry = new THREE.BoxGeometry(
+            CONFIG.PAINTING.WIDTH,
+            CONFIG.PAINTING.HEIGHT,
+            0.05
+          )
+          const paintingMaterial = new THREE.MeshStandardMaterial({
+            map: texture,
+            roughness: 0.5,
+            metalness: 0.1,
+            emissive: 0x666666,
+            emissiveMap: texture
+          })
+          const painting = new THREE.Mesh(paintingGeometry, paintingMaterial)
+          painting.castShadow = true
+          painting.receiveShadow = true
+          painting.position.set(this.x, this.y, this.z)
+
+          if (this.rotation === 0) painting.position.z += 0.06
+          else if (this.rotation === Math.PI) painting.position.z -= 0.06
+          else if (this.rotation === Math.PI / 2) painting.position.x += 0.06
+          else if (this.rotation === -Math.PI / 2) painting.position.x -= 0.06
+
+          painting.rotation.y = this.rotation
+          painting.userData = this.getUserData(paintingMaterial)
+          scene.add(painting)
+          paintingMeshes.push(painting)
+        }
+      }
+
+      class RepoPainting extends Painting {
+        drawContent(context) {
+          const repo = this.data
+          context.fillStyle = CONFIG.COLORS.TEXT
+          const repoName = repo.name
+          context.font = 'bold 36px Arial'
+          const nameWidth = context.measureText(repoName).width
+          if (nameWidth > context.canvas.width - 40) context.font = 'bold 24px Arial'
+          context.textAlign = 'center'
+          context.fillText(repoName, context.canvas.width / 2, 50)
+          if (repo.description) {
+            context.font = '18px Arial'
+            wrapText(
+              context,
+              repo.description,
+              context.canvas.width / 2,
+              100,
+              context.canvas.width - 40,
+              25
+            )
+          }
+          context.font = '16px Arial'
+          context.fillText(
+            `⭐ Stars: ${repo.stargazers_count} | 🍴 Forks: ${repo.forks_count}`,
+            context.canvas.width / 2,
+            context.canvas.height - 80
+          )
+          if (repo.language) {
+            const langColor = CONFIG.LANGUAGE_COLORS[repo.language] || '#888888'
+            context.fillStyle = langColor
+            context.beginPath()
+            context.arc(
+              context.canvas.width / 2 - 50,
+              context.canvas.height - 40,
+              8,
+              0,
+              2 * Math.PI
+            )
+            context.fill()
+            context.fillStyle = CONFIG.COLORS.TEXT
+            context.fillText(
+              repo.language,
+              context.canvas.width / 2,
+              context.canvas.height - 40
+            )
+          }
+          context.font = '14px Arial'
+          const updated = new Date(repo.updated_at).toLocaleDateString()
+          context.fillText(
+            `Updated: ${updated}`,
+            context.canvas.width / 2,
+            context.canvas.height - 15
+          )
+        }
+
+        getUserData(material) {
+          return {
+            url: this.data.html_url,
+            name: this.data.name,
+            originalMaterial: material.clone()
+          }
+        }
+      }
+
+      class SpotifyPainting extends Painting {
+        drawContent(context, texture) {
+          const track = this.data
+          const albumArt = new Image()
+          albumArt.crossOrigin = 'Anonymous'
+          albumArt.onload = function () {
+            context.drawImage(
+              albumArt,
+              (context.canvas.width - CONFIG.PAINTING.ALBUM_ART_SIZE) / 2,
+              30,
+              CONFIG.PAINTING.ALBUM_ART_SIZE,
+              CONFIG.PAINTING.ALBUM_ART_SIZE
+            )
+            context.fillStyle = CONFIG.COLORS.TEXT
+            context.font = 'bold 32px Arial'
+            context.textAlign = 'center'
+            context.fillText(
+              track.name,
+              context.canvas.width / 2,
+              CONFIG.PAINTING.ALBUM_ART_SIZE + 60
+            )
+            context.font = '18px Arial'
+            context.fillText(
+              track.artists,
+              context.canvas.width / 2,
+              CONFIG.PAINTING.ALBUM_ART_SIZE + 100
+            )
+            context.fillText(
+              track.album,
+              context.canvas.width / 2,
+              CONFIG.PAINTING.ALBUM_ART_SIZE + 130
+            )
+            texture.needsUpdate = true
+          }
+          albumArt.src = track.albumArt
+        }
+
+        getUserData(material) {
+          return {
+            url: this.data.spotifyUrl,
+            name: `${this.data.name} by ${this.data.artists}`,
+            originalMaterial: material.clone(),
+            isSpotify: true
+          }
+        }
+      }
+
+      class ResumePainting extends Painting {
+        drawContent(context) {
+          const section = this.data
+          const lines = wrapTextLines(
+            context,
+            section.text,
+            context.canvas.width - 40,
+            25,
+            5
+          )
+          const titleHeight = 32
+          const gapAfterTitle = 20
+          const totalHeight = titleHeight + gapAfterTitle + lines.length * 25
+          const startY = (context.canvas.height - totalHeight) / 2
+          context.fillStyle = CONFIG.COLORS.TEXT
+          context.font = 'bold 32px Arial'
+          context.textAlign = 'center'
+          context.textBaseline = 'top'
+          context.fillText(section.title, context.canvas.width / 2, startY)
+          context.font = '18px Arial'
+          let y = startY + titleHeight + gapAfterTitle
+          for (const line of lines) {
+            context.fillText(line, context.canvas.width / 2, y)
+            y += 25
+          }
+          context.textBaseline = 'alphabetic'
+        }
+
+        getUserData(material) {
+          return {
+            url: this.data.url,
+            name: this.data.title,
+            originalMaterial: material.clone(),
+            isResume: true
+          }
+        }
+      }
+
+      async function loadRepositories() {
+        try {
+          const repoResponse = await fetch(
+            'https://api.github.com/users/davidyen1124/repos?sort=updated&per_page=20'
+          )
+          repositories = await repoResponse.json()
+
+          try {
+            const spotifyResponse = await fetch(
+              'https://spotify.daviddennislinda.com/api/recently-played'
+            )
+            spotifyTrack = await spotifyResponse.json()
+          } catch (spotifyError) {
+            console.error('Error loading Spotify data:', spotifyError)
+          }
+
+          if (repositories.length > 0) {
+            init()
+            document.getElementById('loading').style.display = 'none'
+          }
+        } catch (error) {
+          console.error('Error loading repositories:', error)
+          document.getElementById('loading').innerHTML =
+            'Error loading repositories. Please refresh.'
+        }
+      }
+
+      function init() {
+        camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        )
+        camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z)
+
+        scene = new THREE.Scene()
+        scene.background = new THREE.Color(CONFIG.COLORS.BACKGROUND)
+        scene.fog = new THREE.Fog(CONFIG.COLORS.BACKGROUND, 8, 20)
+
+        const ambientLight = new THREE.AmbientLight(
+          CONFIG.LIGHTING.AMBIENT.COLOR,
+          CONFIG.LIGHTING.AMBIENT.INTENSITY
+        )
+        scene.add(ambientLight)
+
+        flashlight = new THREE.SpotLight(
+          CONFIG.LIGHTING.FLASHLIGHT.COLOR,
+          CONFIG.LIGHTING.FLASHLIGHT.INTENSITY,
+          CONFIG.LIGHTING.FLASHLIGHT.DISTANCE,
+          CONFIG.LIGHTING.FLASHLIGHT.ANGLE,
+          CONFIG.LIGHTING.FLASHLIGHT.PENUMBRA,
+          CONFIG.LIGHTING.FLASHLIGHT.DECAY
+        )
+        flashlight.castShadow = true
+        flashlight.shadow.mapSize.set(1024, 1024)
+        flashlight.shadow.bias = -0.0001
+        flashlight.position.set(0, 0, 0)
+        flashlight.target.position.set(0, 0, -1)
+
+        const rimLight = new THREE.DirectionalLight(
+          CONFIG.LIGHTING.RIM.COLOR,
+          CONFIG.LIGHTING.RIM.INTENSITY
+        )
+        rimLight.castShadow = true
+        rimLight.shadow.mapSize.set(1024, 1024)
+        rimLight.position.set(1, 5, 1)
+        scene.add(rimLight)
+
+        const spotLight1 = new THREE.SpotLight(
+          CONFIG.LIGHTING.SPOT.COLOR,
+          CONFIG.LIGHTING.SPOT.INTENSITY,
+          CONFIG.LIGHTING.SPOT.DISTANCE,
+          CONFIG.LIGHTING.SPOT.ANGLE,
+          CONFIG.LIGHTING.SPOT.PENUMBRA
+        )
+        spotLight1.castShadow = true
+        spotLight1.shadow.mapSize.set(1024, 1024)
+        spotLight1.position.set(
+          CONFIG.ROOM_SIZE / 2,
+          CONFIG.WALL_HEIGHT - 1,
+          -CONFIG.ROOM_SIZE / 2
+        )
+        scene.add(spotLight1)
+
+        const spotLight2 = new THREE.SpotLight(
+          CONFIG.LIGHTING.SPOT.COLOR,
+          CONFIG.LIGHTING.SPOT.INTENSITY,
+          CONFIG.LIGHTING.SPOT.DISTANCE,
+          CONFIG.LIGHTING.SPOT.ANGLE,
+          CONFIG.LIGHTING.SPOT.PENUMBRA
+        )
+        spotLight2.castShadow = true
+        spotLight2.shadow.mapSize.set(1024, 1024)
+        spotLight2.position.set(
+          -CONFIG.ROOM_SIZE / 2,
+          CONFIG.WALL_HEIGHT - 1,
+          CONFIG.ROOM_SIZE / 2
+        )
+        scene.add(spotLight2)
+
+        camera.add(flashlight)
+        camera.add(flashlight.target)
+        scene.add(camera)
+
+        const floorGeometry = new THREE.PlaneGeometry(
+          CONFIG.ROOM_SIZE * 2,
+          CONFIG.ROOM_SIZE * 2
+        )
+
+        const floorCanvas = document.createElement('canvas')
+        floorCanvas.width = 512
+        floorCanvas.height = 512
+        const floorCtx = floorCanvas.getContext('2d')
+        floorCtx.fillStyle = '#3a3a3a'
+        floorCtx.fillRect(0, 0, floorCanvas.width, floorCanvas.height)
+        floorCtx.strokeStyle = '#444'
+        floorCtx.lineWidth = 4
+        const step = floorCanvas.width / 8
+        for (let i = 0; i <= 8; i++) {
+          floorCtx.beginPath()
+          floorCtx.moveTo(i * step, 0)
+          floorCtx.lineTo(i * step, floorCanvas.height)
+          floorCtx.moveTo(0, i * step)
+          floorCtx.lineTo(floorCanvas.width, i * step)
+          floorCtx.stroke()
+        }
+        const floorTexture = new THREE.CanvasTexture(floorCanvas)
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
+        floorTexture.repeat.set(CONFIG.ROOM_SIZE / 5, CONFIG.ROOM_SIZE / 5)
+
+        const floorMaterial = new THREE.MeshStandardMaterial({
+          map: floorTexture,
+          roughness: 0.7,
+          metalness: 0.3
+        })
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial)
+        floor.rotation.x = -Math.PI / 2
+        floor.position.y = 0
+        floor.receiveShadow = true
+        scene.add(floor)
+
+        const ceilingGeometry = new THREE.PlaneGeometry(
+          CONFIG.ROOM_SIZE * 2,
+          CONFIG.ROOM_SIZE * 2
+        )
+        const ceilingMaterial = new THREE.MeshStandardMaterial({
+          color: CONFIG.COLORS.CEILING,
+          roughness: 0.9,
+          metalness: 0.15
+        })
+        const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial)
+        ceiling.rotation.x = Math.PI / 2
+        ceiling.position.y = CONFIG.WALL_HEIGHT
+        ceiling.receiveShadow = true
+        scene.add(ceiling)
+
+        createWalls()
+
+        createPaintings()
+
+        if (!isMobile) {
+          controls = new THREE.PointerLockControls(camera, document.body)
+
+          const blocker = document.getElementById('blocker')
+          const instructions = document.getElementById('instructions')
+
+          instructions.addEventListener('click', function () {
+            controls.lock()
+          })
+
+          controls.addEventListener('lock', function () {
+            instructions.style.display = 'none'
+            blocker.style.display = 'none'
+
+            controls
+              .getObject()
+              .position.set(cameraPos.x, cameraPos.y, cameraPos.z)
+          })
+
+          controls.addEventListener('unlock', function () {
+            velocity.x = 0
+            velocity.z = 0
+            blocker.style.display = 'flex'
+            instructions.style.display = 'block'
+          })
+
+          scene.add(controls.getObject())
+
+          const onKeyDown = function (event) {
+            switch (event.code) {
+              case 'ArrowUp':
+              case 'KeyW':
+                moveForward = true
+                break
+              case 'ArrowLeft':
+              case 'KeyA':
+                moveLeft = true
+                break
+              case 'ArrowDown':
+              case 'KeyS':
+                moveBackward = true
+                break
+              case 'ArrowRight':
+              case 'KeyD':
+                moveRight = true
+                break
+            }
+          }
+
+          const onKeyUp = function (event) {
+            switch (event.code) {
+              case 'ArrowUp':
+              case 'KeyW':
+                moveForward = false
+                break
+              case 'ArrowLeft':
+              case 'KeyA':
+                moveLeft = false
+                break
+              case 'ArrowDown':
+              case 'KeyS':
+                moveBackward = false
+                break
+              case 'ArrowRight':
+              case 'KeyD':
+                moveRight = false
+                break
+            }
+          }
+
+          document.addEventListener('keydown', onKeyDown)
+          document.addEventListener('keyup', onKeyUp)
+        } else {
+          document.getElementById('blocker').style.display = 'none'
+          document.getElementById('instructions').style.display = 'none'
+
+          document.getElementById('joystick-left').style.display = 'block'
+          document.getElementById('joystick-right').style.display = 'block'
+
+          mobileYaw = 0
+          mobilePitch = 0
+
+          initJoysticks()
+        }
+
+        raycaster = new THREE.Raycaster()
+
+        document.addEventListener('click', onMouseClick, false)
+
+        renderer = new THREE.WebGLRenderer({ antialias: true })
+        renderer.setPixelRatio(window.devicePixelRatio)
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.physicallyCorrectLights = true
+        renderer.outputEncoding = THREE.sRGBEncoding
+        renderer.toneMapping = THREE.ACESFilmicToneMapping
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        document.body.appendChild(renderer.domElement)
+
+        window.addEventListener('resize', onWindowResize)
+
+        animate()
+      }
+
+      function createWalls() {
+        const wallMaterial = new THREE.MeshStandardMaterial({
+          color: CONFIG.COLORS.WALLS,
+          roughness: 0.8,
+          metalness: 0.2
+        })
+
+        const northWallGeometry = new THREE.BoxGeometry(
+          CONFIG.ROOM_SIZE * 2,
+          CONFIG.WALL_HEIGHT,
+          0.1
+        )
+        const northWall = new THREE.Mesh(northWallGeometry, wallMaterial)
+        northWall.castShadow = true
+        northWall.receiveShadow = true
+        northWall.position.set(0, CONFIG.WALL_HEIGHT / 2, -CONFIG.ROOM_SIZE)
+        scene.add(northWall)
+
+        const southWallGeometry = new THREE.BoxGeometry(
+          CONFIG.ROOM_SIZE * 2,
+          CONFIG.WALL_HEIGHT,
+          0.1
+        )
+        const southWall = new THREE.Mesh(southWallGeometry, wallMaterial)
+        southWall.castShadow = true
+        southWall.receiveShadow = true
+        southWall.position.set(0, CONFIG.WALL_HEIGHT / 2, CONFIG.ROOM_SIZE)
+        scene.add(southWall)
+
+        const eastWallGeometry = new THREE.BoxGeometry(
+          0.1,
+          CONFIG.WALL_HEIGHT,
+          CONFIG.ROOM_SIZE * 2
+        )
+        const eastWall = new THREE.Mesh(eastWallGeometry, wallMaterial)
+        eastWall.castShadow = true
+        eastWall.receiveShadow = true
+        eastWall.position.set(CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, 0)
+        scene.add(eastWall)
+
+        const westWallGeometry = new THREE.BoxGeometry(
+          0.1,
+          CONFIG.WALL_HEIGHT,
+          CONFIG.ROOM_SIZE * 2
+        )
+        const westWall = new THREE.Mesh(westWallGeometry, wallMaterial)
+        westWall.castShadow = true
+        westWall.receiveShadow = true
+        westWall.position.set(-CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, 0)
+        scene.add(westWall)
+      }
+
+      function createPaintings() {
+        const wallCount = 4
+        const wallLength = CONFIG.ROOM_SIZE * 2
+        const paintingWidth = CONFIG.PAINTING.WIDTH
+        const wallOffset = CONFIG.PAINTING.WALL_OFFSET
+        const availableLength = wallLength
+
+        // Adjust repository list so each wall has the same number of paintings
+        // and spacing meets the minimum requirement
+        while (true) {
+          let allPaintings = [...resumeSections, ...repositories]
+          if (spotifyTrack) {
+            allPaintings.splice(resumeSections.length, 0, {
+              isSpotify: true,
+              spotifyData: spotifyTrack
+            })
+          }
+
+          if (allPaintings.length % wallCount !== 0) {
+            const removeCount = allPaintings.length % wallCount
+            repositories.splice(-removeCount)
+            continue
+          }
+
+          const perWall = allPaintings.length / wallCount
+          const spacing =
+            (availableLength - paintingWidth * perWall) / (perWall + 1)
+
+          if (spacing < CONFIG.PAINTING.MIN_SPACING && repositories.length > 0) {
+            repositories.pop()
+            continue
+          }
+
+          break
+        }
+
+        let allPaintings = [...resumeSections, ...repositories]
+        if (spotifyTrack) {
+          allPaintings.splice(resumeSections.length, 0, {
+            isSpotify: true,
+            spotifyData: spotifyTrack
+          })
+        }
+
+        const paintingsPerWall = allPaintings.length / wallCount
+        const spaceBetween =
+          (availableLength - paintingWidth * paintingsPerWall) /
+          (paintingsPerWall + 1)
+
+        const firstCenter =
+          -CONFIG.ROOM_SIZE + spaceBetween + paintingWidth / 2
+
+        let index = 0
+
+        for (let wallIndex = 0; wallIndex < wallCount; wallIndex++) {
+          for (let i = 0; i < paintingsPerWall; i++) {
+            const painting = allPaintings[index++]
+            const pos = firstCenter + i * (paintingWidth + spaceBetween)
+
+            let x, z, rotation
+
+            switch (wallIndex) {
+              case 0:
+                x = pos
+                z = -CONFIG.ROOM_SIZE + wallOffset
+                rotation = 0
+                break
+              case 1:
+                x = CONFIG.ROOM_SIZE - wallOffset
+                z = pos
+                rotation = -Math.PI / 2
+                break
+              case 2:
+                x = pos
+                z = CONFIG.ROOM_SIZE - wallOffset
+                rotation = Math.PI
+                break
+              case 3:
+                x = -CONFIG.ROOM_SIZE + wallOffset
+                z = pos
+                rotation = Math.PI / 2
+                break
+            }
+
+            if (painting.isSpotify) {
+              createPainting(
+                painting.spotifyData,
+                x,
+                CONFIG.PAINTING.ELEVATION,
+                z,
+                rotation,
+                true
+              )
+            } else if (painting.isResume) {
+              createPainting(
+                painting,
+                x,
+                CONFIG.PAINTING.ELEVATION,
+                z,
+                rotation,
+                false,
+                true
+              )
+            } else {
+              createPainting(
+                painting,
+                x,
+                CONFIG.PAINTING.ELEVATION,
+                z,
+                rotation
+              )
+            }
+          }
+        }
+      }
+      function createPainting(data, x, y, z, rotation, isSpotify = false, isResume = false) {
+        let painting
+        if (isSpotify) {
+          painting = new SpotifyPainting(data, x, y, z, rotation)
+        } else if (isResume) {
+          painting = new ResumePainting(data, x, y, z, rotation)
+        } else {
+          painting = new RepoPainting(data, x, y, z, rotation)
+        }
+        painting.create()
+      }
+
+
+
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+      }
+
+      function onMouseClick() {
+        if (!isMobile && controls && controls.isLocked) {
+          handlePaintingRaycast()
+        } else if (isMobile) {
+          handlePaintingRaycast()
+        }
+      }
+
+      function handlePaintingRaycast() {
+        raycaster.setFromCamera(new THREE.Vector2(), camera)
+        const intersects = raycaster.intersectObjects(paintingMeshes)
+
+        if (intersects.length > 0) {
+          const object = intersects[0].object
+
+          cameraPos.x = isMobile
+            ? camera.position.x
+            : controls.getObject().position.x
+          cameraPos.y = isMobile
+            ? camera.position.y
+            : controls.getObject().position.y
+          cameraPos.z = isMobile
+            ? camera.position.z
+            : controls.getObject().position.z
+
+          window.open(object.userData.url, '_blank')
+        }
+      }
+
+      function initJoysticks() {
+        const leftEl = document.getElementById('joystick-left')
+        const rightEl = document.getElementById('joystick-right')
+
+        let leftTouchId = null
+        let leftCenter = { x: 0, y: 0 }
+        let rightTouchId = null
+        let rightCenter = { x: 0, y: 0 }
+        let lastRightTouchX = 0
+        let lastRightTouchY = 0
+
+        function handleTouchStart(e) {
+          e.preventDefault()
+          for (let touch of e.changedTouches) {
+            const rectLeft = leftEl.getBoundingClientRect()
+            const rectRight = rightEl.getBoundingClientRect()
+
+            if (
+              touch.pageX >= rectLeft.left &&
+              touch.pageX <= rectLeft.right &&
+              touch.pageY >= rectLeft.top &&
+              touch.pageY <= rectLeft.bottom
+            ) {
+              leftTouchId = touch.identifier
+              leftCenter = {
+                x: rectLeft.left + rectLeft.width / 2,
+                y: rectLeft.top + rectLeft.height / 2
+              }
+            } else if (
+              touch.pageX >= rectRight.left &&
+              touch.pageX <= rectRight.right &&
+              touch.pageY >= rectRight.top &&
+              touch.pageY <= rectRight.bottom
+            ) {
+              rightTouchId = touch.identifier
+              rightCenter = {
+                x: rectRight.left + rectRight.width / 2,
+                y: rectRight.top + rectRight.height / 2
+              }
+              lastRightTouchX = touch.pageX
+              lastRightTouchY = touch.pageY
+            }
+          }
+        }
+
+        function handleTouchMove(e) {
+          e.preventDefault()
+          for (let touch of e.changedTouches) {
+            if (touch.identifier === leftTouchId) {
+              const dx = touch.pageX - leftCenter.x
+              const dy = touch.pageY - leftCenter.y
+
+              moveForward = dy > 10
+              moveBackward = dy < -10
+              moveLeft = dx < -10
+              moveRight = dx > 10
+
+              const stick = leftEl.querySelector('.joystick')
+              if (stick) {
+                const maxDist = 30
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                const factor = dist > maxDist ? maxDist / dist : 1
+
+                stick.style.transform = `translate(${dx * factor}px, ${
+                  dy * factor
+                }px)`
+              }
+            } else if (touch.identifier === rightTouchId) {
+              const dx = touch.pageX - rightCenter.x
+              const dy = touch.pageY - rightCenter.y
+
+              const maxDist = 40
+              const deadzone = 5
+              const dist = Math.sqrt(dx * dx + dy * dy)
+
+              if (dist > deadzone) {
+                const normalizedDist = Math.min(
+                  1,
+                  (dist - deadzone) / (maxDist - deadzone)
+                )
+                joystickRightX = (dx / dist) * normalizedDist
+                joystickRightY = (dy / dist) * normalizedDist
+              } else {
+                joystickRightX = 0
+                joystickRightY = 0
+              }
+
+              const stick = rightEl.querySelector('.joystick')
+              if (stick) {
+                const visualFactor = dist > maxDist ? maxDist / dist : 1
+                stick.style.transform = `translate(${dx * visualFactor}px, ${
+                  dy * visualFactor
+                }px)`
+              }
+            }
+          }
+        }
+
+        function handleTouchEnd(e) {
+          e.preventDefault()
+          for (let touch of e.changedTouches) {
+            if (touch.identifier === leftTouchId) {
+              leftTouchId = null
+              moveForward = false
+              moveBackward = false
+              moveLeft = false
+              moveRight = false
+
+              const stick = leftEl.querySelector('.joystick')
+              if (stick) {
+                stick.style.transform = 'translate(0px, 0px)'
+              }
+            } else if (touch.identifier === rightTouchId) {
+              rightTouchId = null
+              joystickRightX = 0
+              joystickRightY = 0
+
+              const stick = rightEl.querySelector('.joystick')
+              if (stick) {
+                stick.style.transform = 'translate(0px, 0px)'
+              }
+            }
+          }
+        }
+
+        leftEl.addEventListener('touchstart', handleTouchStart, {
+          passive: false
+        })
+        leftEl.addEventListener('touchmove', handleTouchMove, {
+          passive: false
+        })
+        leftEl.addEventListener('touchend', handleTouchEnd, { passive: false })
+        leftEl.addEventListener('touchcancel', handleTouchEnd, {
+          passive: false
+        })
+
+        rightEl.addEventListener('touchstart', handleTouchStart, {
+          passive: false
+        })
+        rightEl.addEventListener('touchmove', handleTouchMove, {
+          passive: false
+        })
+        rightEl.addEventListener('touchend', handleTouchEnd, { passive: false })
+        rightEl.addEventListener('touchcancel', handleTouchEnd, {
+          passive: false
+        })
+      }
+
+      function animate() {
+        requestAnimationFrame(animate)
+
+        const time = performance.now()
+        const delta = (time - prevTime) / 1000
+
+        velocity.x -= velocity.x * CONFIG.MOVEMENT.DECELERATION * delta
+        velocity.z -= velocity.z * CONFIG.MOVEMENT.DECELERATION * delta
+
+        direction.z = Number(moveForward) - Number(moveBackward)
+        direction.x = Number(moveRight) - Number(moveLeft)
+        direction.normalize()
+
+        if (moveForward || moveBackward)
+          velocity.z -= direction.z * CONFIG.MOVEMENT.SPEED * delta
+        if (moveLeft || moveRight)
+          velocity.x -= direction.x * CONFIG.MOVEMENT.SPEED * delta
+
+        if (!isMobile) {
+          if (controls && controls.isLocked === true) {
+            controls.moveRight(-velocity.x * delta)
+            controls.moveForward(-velocity.z * delta)
+
+            if (
+              controls.getObject().position.x <
+              -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            )
+              controls.getObject().position.x =
+                -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            if (
+              controls.getObject().position.x >
+              CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            )
+              controls.getObject().position.x =
+                CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            if (
+              controls.getObject().position.z <
+              -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            )
+              controls.getObject().position.z =
+                -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            if (
+              controls.getObject().position.z >
+              CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+            )
+              controls.getObject().position.z =
+                CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+
+            cameraPos.x = controls.getObject().position.x
+            cameraPos.y = controls.getObject().position.y
+            cameraPos.z = controls.getObject().position.z
+          }
+        } else {
+          const forward = new THREE.Vector3(
+            Math.sin(mobileYaw),
+            0,
+            Math.cos(mobileYaw)
+          )
+
+          const right = new THREE.Vector3(
+            Math.sin(mobileYaw + Math.PI / 2),
+            0,
+            Math.cos(mobileYaw + Math.PI / 2)
+          )
+
+          if (moveForward || moveBackward) {
+            camera.position.x -=
+              forward.x * velocity.z * delta * mobileMovementSpeedFactor
+            camera.position.z -=
+              forward.z * velocity.z * delta * mobileMovementSpeedFactor
+          }
+
+          if (moveLeft || moveRight) {
+            camera.position.x -=
+              right.x * velocity.x * delta * mobileMovementSpeedFactor
+            camera.position.z -=
+              right.z * velocity.x * delta * mobileMovementSpeedFactor
+          }
+
+          if (
+            camera.position.x <
+            -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.x =
+              -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+          if (
+            camera.position.x >
+            CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.x =
+              CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+          if (
+            camera.position.z <
+            -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.z =
+              -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+          if (
+            camera.position.z >
+            CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          ) {
+            camera.position.z =
+              CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
+          }
+
+          mobileYaw -= joystickRightX * mobileLookSpeed * delta
+
+          mobilePitch -= joystickRightY * mobileLookSpeed * delta
+
+          mobilePitch = Math.max(
+            -Math.PI / 2 + 0.01,
+            Math.min(Math.PI / 2 - 0.01, mobilePitch)
+          )
+
+          camera.rotation.set(0, 0, 0)
+          camera.rotateY(mobileYaw)
+          camera.rotateX(mobilePitch)
+
+          cameraPos.x = camera.position.x
+          cameraPos.y = camera.position.y
+          cameraPos.z = camera.position.z
+        }
+
+        prevTime = time
+        renderer.render(scene, camera)
+      }
+
+      loadRepositories()
