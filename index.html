@@ -104,6 +104,9 @@
           SPACING: 3,
           ELEVATION: 1.5,
           FRAME_THICKNESS: 0.1,
+          FRAME_THICKNESS_REPO: 0.1,
+          FRAME_THICKNESS_SPOTIFY: 0.08,
+          FRAME_THICKNESS_RESUME: 0.12,
           CANVAS_WIDTH: 512,
           CANVAS_HEIGHT: 341,
           PAINTINGS_PER_WALL: 3,
@@ -124,6 +127,9 @@
           CEILING: 0x213040,
           WALLS: 0x2c425e,
           FRAME: 0x7e6338,
+          FRAME_REPO: 0x7e6338,
+          FRAME_SPOTIFY: 0x1db954,
+          FRAME_RESUME: 0x3f6e74,
           TEXT: '#cccccc',
           BACKGROUND_DARK: '#1a1a1a'
         },
@@ -245,13 +251,27 @@
         }
 
         create() {
+          let frameColor = CONFIG.COLORS.FRAME
+          let frameThickness = CONFIG.PAINTING.FRAME_THICKNESS
+
+          if (this instanceof RepoPainting) {
+            frameColor = CONFIG.COLORS.FRAME_REPO
+            frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_REPO
+          } else if (this instanceof SpotifyPainting) {
+            frameColor = CONFIG.COLORS.FRAME_SPOTIFY
+            frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_SPOTIFY
+          } else if (this instanceof ResumePainting) {
+            frameColor = CONFIG.COLORS.FRAME_RESUME
+            frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_RESUME
+          }
+
           const frameGeometry = new THREE.BoxGeometry(
             CONFIG.PAINTING.WIDTH + 0.2,
             CONFIG.PAINTING.HEIGHT + 0.2,
-            CONFIG.PAINTING.FRAME_THICKNESS
+            frameThickness
           )
           const frameMaterial = new THREE.MeshStandardMaterial({
-            color: CONFIG.COLORS.FRAME,
+            color: frameColor,
             roughness: 0.4,
             metalness: 0.7
           })
