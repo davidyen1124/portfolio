@@ -6,7 +6,7 @@ _Please maintain complete silence in the gallery. No running, no food, and absol
 
 ## 🎨 What's This Masterpiece?
 
-Behold, a groundbreaking innovation in personal portfolio presentation! Instead of boring you with yet another static webpage filled with buzzwords and stock photos, I've created an actual 3D museum. Because why list your projects when you can force people to _walk_ through them, right?
+Behold, a groundbreaking innovation in personal portfolio presentation! Now powered by React and Vite. Instead of boring you with yet another static webpage filled with buzzwords and stock photos, I've created an actual 3D museum. Because why list your projects when you can force people to _walk_ through them, right?
 
 ## 🎮 How to Navigate This Pretentious Gallery
 
@@ -34,6 +34,7 @@ Keep an eye out for the special Spotify exhibit! It's like those audio guides at
 2. Click to start
 3. Get lost in the magnificence of my work
 4. Try not to bump into the virtual walls
+5. To run locally clone the repo, run `npm install` then `npm run dev`
 
 ## 🤔 Why?
 
