@@ -22,7 +22,10 @@ const CONFIG = {
   MOVEMENT: {
     SPEED: 120,
     DECELERATION: 10.0,
-    BOUNDARY_OFFSET: 1
+    BOUNDARY_OFFSET: 1,
+    GRAVITY: 30,
+    JUMP_SPEED: 8,
+    GROUND_LEVEL: 1.7
   },
 
   COLORS: {
@@ -95,6 +98,8 @@ let moveRight = false
 let prevTime = performance.now()
 const velocity = new THREE.Vector3()
 const direction = new THREE.Vector3()
+let verticalVelocity = 0
+let canJump = true
 let raycaster
 let flashlight
 const cameraPos = { x: 0, y: 1.7, z: 0 }
@@ -687,6 +692,12 @@ function init() {
       case 'KeyD':
         moveRight = true
         break
+      case 'Space':
+        if (canJump) {
+          verticalVelocity = CONFIG.MOVEMENT.JUMP_SPEED
+          canJump = false
+        }
+        break
       }
     }
 
@@ -707,6 +718,8 @@ function init() {
       case 'ArrowRight':
       case 'KeyD':
         moveRight = false
+        break
+      case 'Space':
         break
       }
     }
@@ -1260,6 +1273,7 @@ function animate() {
 
   velocity.x -= velocity.x * CONFIG.MOVEMENT.DECELERATION * delta
   velocity.z -= velocity.z * CONFIG.MOVEMENT.DECELERATION * delta
+  verticalVelocity -= CONFIG.MOVEMENT.GRAVITY * delta
 
   direction.z = Number(moveForward) - Number(moveBackward)
   direction.x = Number(moveRight) - Number(moveLeft)
@@ -1274,6 +1288,13 @@ function animate() {
     if (controls && controls.isLocked === true) {
       controls.moveRight(-velocity.x * delta)
       controls.moveForward(-velocity.z * delta)
+      controls.getObject().position.y += verticalVelocity * delta
+
+      if (controls.getObject().position.y < CONFIG.MOVEMENT.GROUND_LEVEL) {
+        controls.getObject().position.y = CONFIG.MOVEMENT.GROUND_LEVEL
+        verticalVelocity = 0
+        canJump = true
+      }
 
       if (
         controls.getObject().position.x <
@@ -1329,6 +1350,13 @@ function animate() {
         right.x * velocity.x * delta * mobileMovementSpeedFactor
       camera.position.z -=
         right.z * velocity.x * delta * mobileMovementSpeedFactor
+    }
+
+    camera.position.y += verticalVelocity * delta
+    if (camera.position.y < CONFIG.MOVEMENT.GROUND_LEVEL) {
+      camera.position.y = CONFIG.MOVEMENT.GROUND_LEVEL
+      verticalVelocity = 0
+      canJump = true
     }
 
     if (
