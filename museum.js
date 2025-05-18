@@ -232,8 +232,7 @@ class Painting {
     scene.add(painting)
     paintingMeshes.push(painting)
     
-    // Add a spotlight directly above the painting
-    this.addSpotlight()
+    // Removed individual spotlights per painting to prevent WebGL texture limits
   }
   
   // Method to add a spotlight above the painting
@@ -497,6 +496,35 @@ function init() {
     CONFIG.LIGHTING.AMBIENT.INTENSITY
   )
   scene.add(ambientLight)
+  
+  // Add a few global spotlights to illuminate the paintings instead of individual lights
+  // North wall spotlight
+  const northWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  northWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE/2)
+  northWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, -CONFIG.ROOM_SIZE + 0.5)
+  scene.add(northWallLight)
+  scene.add(northWallLight.target)
+  
+  // South wall spotlight
+  const southWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  southWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE/2)
+  southWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, CONFIG.ROOM_SIZE - 0.5)
+  scene.add(southWallLight)
+  scene.add(southWallLight.target)
+  
+  // East wall spotlight
+  const eastWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  eastWallLight.position.set(CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
+  eastWallLight.target.position.set(CONFIG.ROOM_SIZE - 0.5, CONFIG.PAINTING.ELEVATION, 0)
+  scene.add(eastWallLight)
+  scene.add(eastWallLight.target)
+  
+  // West wall spotlight
+  const westWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  westWallLight.position.set(-CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
+  westWallLight.target.position.set(-CONFIG.ROOM_SIZE + 0.5, CONFIG.PAINTING.ELEVATION, 0)
+  scene.add(westWallLight)
+  scene.add(westWallLight.target)
 
   flashlight = new THREE.SpotLight(
     CONFIG.LIGHTING.FLASHLIGHT.COLOR,
@@ -597,67 +625,12 @@ function init() {
     CONFIG.ROOM_SIZE * 2
   )
 
-  // Create glossy marble-like floor texture
-  const floorCanvas = document.createElement('canvas')
-  floorCanvas.width = 1024
-  floorCanvas.height = 1024
-  const floorCtx = floorCanvas.getContext('2d')
-  
-  // Base color for marble (lighter)
-  floorCtx.fillStyle = '#333333'
-  floorCtx.fillRect(0, 0, floorCanvas.width, floorCanvas.height)
-  
-  // Add subtle marble veins
-  floorCtx.strokeStyle = 'rgba(40, 40, 45, 0.7)'
-  floorCtx.lineWidth = 2
-  
-  // Create random marble veins
-  for (let i = 0; i < 30; i++) {
-    const startX = Math.random() * floorCanvas.width
-    const startY = Math.random() * floorCanvas.height
-    floorCtx.beginPath()
-    floorCtx.moveTo(startX, startY)
-    
-    let lastX = startX
-    let lastY = startY
-    
-    // Create curvy veins
-    for (let j = 0; j < 5; j++) {
-      const controlX1 = lastX + (Math.random() * 200 - 100)
-      const controlY1 = lastY + (Math.random() * 200 - 100)
-      const controlX2 = lastX + (Math.random() * 200 - 100)
-      const controlY2 = lastY + (Math.random() * 200 - 100)
-      const endX = lastX + (Math.random() * 200 - 100)
-      const endY = lastY + (Math.random() * 200 - 100)
-      
-      floorCtx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, endX, endY)
-      lastX = endX
-      lastY = endY
-    }
-    
-    floorCtx.stroke()
-  }
-  
-  // Add subtle grid lines for tiles
-  floorCtx.strokeStyle = 'rgba(30, 30, 35, 0.6)'
-  floorCtx.lineWidth = 1
-  const tileSize = floorCanvas.width / 8
-  for (let i = 0; i <= 8; i++) {
-    floorCtx.beginPath()
-    floorCtx.moveTo(i * tileSize, 0)
-    floorCtx.lineTo(i * tileSize, floorCanvas.height)
-    floorCtx.moveTo(0, i * tileSize)
-    floorCtx.lineTo(floorCanvas.width, i * tileSize)
-    floorCtx.stroke()
-  }
-  
-  const floorTexture = new THREE.CanvasTexture(floorCanvas)
-  floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
-  floorTexture.repeat.set(CONFIG.ROOM_SIZE / 4, CONFIG.ROOM_SIZE / 4)
+  // Simplify floor - just use a color instead of texture to reduce WebGL resources
+  const floorColor = 0x333333
 
-  // Create glossy floor material
+  // Create glossy floor material - simplified to just use color
   const floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTexture,
+    color: floorColor,
     roughness: 0.05,  // Very low roughness for glossiness
     metalness: 0.3
   })
@@ -673,54 +646,11 @@ function init() {
     CONFIG.ROOM_SIZE * 2
   )
   
-  // Create ceiling texture with recessed panels
-  const ceilingCanvas = document.createElement('canvas')
-  ceilingCanvas.width = 1024
-  ceilingCanvas.height = 1024
-  const ceilingCtx = ceilingCanvas.getContext('2d')
-  
-  // Base white color
-  ceilingCtx.fillStyle = '#ffffff'
-  ceilingCtx.fillRect(0, 0, ceilingCanvas.width, ceilingCanvas.height)
-  
-  // Create grid pattern for recessed ceiling panels
-  ceilingCtx.fillStyle = '#f0f0f0'
-  const panelSize = ceilingCanvas.width / 8
-  const panelInset = 10
-  
-  // Draw borders around the panels for a more defined look
-  ceilingCtx.strokeStyle = '#dddddd'
-  ceilingCtx.lineWidth = 2
-  
-  for (let x = 0; x < 8; x++) {
-    for (let y = 0; y < 8; y++) {
-      // Fill the recessed panel
-      ceilingCtx.fillRect(
-        x * panelSize + panelInset,
-        y * panelSize + panelInset,
-        panelSize - panelInset * 2,
-        panelSize - panelInset * 2
-      )
-      
-      // Draw the border
-      ceilingCtx.strokeRect(
-        x * panelSize + panelInset,
-        y * panelSize + panelInset,
-        panelSize - panelInset * 2,
-        panelSize - panelInset * 2
-      )
-    }
-  }
-  
-  const ceilingTexture = new THREE.CanvasTexture(ceilingCanvas)
-  ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping
-  ceilingTexture.repeat.set(1, 1)
-  
+  // Simplify ceiling - just use a color instead of texture
   const ceilingMaterial = new THREE.MeshStandardMaterial({
-    map: ceilingTexture,
+    color: 0xffffff,
     roughness: 0.9,
-    metalness: 0.0,
-    color: 0xffffff
+    metalness: 0.0
   })
   
   const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial)
@@ -845,35 +775,8 @@ function init() {
 }
 
 function createWalls() {
-  // Create canvas texture for wall
-  const wallCanvas = document.createElement('canvas')
-  wallCanvas.width = 1024
-  wallCanvas.height = 1024
-  const wallCtx = wallCanvas.getContext('2d')
-  
-  // Create subtle wall texture (light cream color with slight texture)
-  wallCtx.fillStyle = '#f0f0e8' // Light cream/off-white
-  wallCtx.fillRect(0, 0, wallCanvas.width, wallCanvas.height)
-  
-  // Add subtle noise pattern
-  wallCtx.fillStyle = 'rgba(0, 0, 0, 0.05)'
-  for (let i = 0; i < 5000; i++) {
-    const x = Math.random() * wallCanvas.width
-    const y = Math.random() * wallCanvas.height
-    const size = Math.random() * 2 + 1
-    wallCtx.beginPath()
-    wallCtx.arc(x, y, size, 0, Math.PI * 2)
-    wallCtx.fill()
-  }
-  
-  // Create wall texture
-  const wallTexture = new THREE.CanvasTexture(wallCanvas)
-  wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping
-  wallTexture.repeat.set(2, 1)
-  
-  // Elegant museum wall material
+  // Simplified wall material - just use color instead of texture
   const wallMaterial = new THREE.MeshStandardMaterial({
-    map: wallTexture,
     color: 0xf5f5f0, // Light off-white
     roughness: 0.9,  // Matte finish
     metalness: 0.0   // No metallic properties
