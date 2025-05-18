@@ -102,39 +102,7 @@ const cameraPos = { x: 0, y: 1.7, z: 0 }
 let repositories = []
 let paintingMeshes = []
 let spotifyTrack = null
-
-const resumeSections = [
-  {
-    isResume: true,
-    title: 'Summary',
-    text: 'Software engineer, 9+ years. Skilled in JS, TS, Node.js, React, Python.',
-    url: 'resume.pdf'
-  },
-  {
-    isResume: true,
-    title: 'Typeface (2023\u2013Present)',
-    text: 'Cut bundle size, enhanced search, built components.',
-    url: 'resume.pdf'
-  },
-  {
-    isResume: true,
-    title: 'Houzz (2021\u20132023)',
-    text: 'Refactored home feed, unified search results.',
-    url: 'resume.pdf'
-  },
-  {
-    isResume: true,
-    title: 'Yahoo (2017\u20132021)',
-    text: 'Custom report tool, faster generation.',
-    url: 'resume.pdf'
-  },
-  {
-    isResume: true,
-    title: 'Dcard (2013\u20132015)',
-    text: 'Redesigned forum, drove user growth.',
-    url: 'resume.pdf'
-  }
-]
+let resumeSections = []
 
 let isMobile = false
 let joystickRightX = 0
@@ -452,22 +420,32 @@ async function loadRepositories() {
         console.error('Error loading Spotify data:', spotifyError)
         return null
       })
+    const resumePromise = fetch('resume.json')
+      .then((res) => res.json())
+      .catch((resumeError) => {
+        console.error('Error loading resume data:', resumeError)
+        return []
+      })
 
-    const [repoData, spotifyData] = await Promise.all([
+    const [repoData, spotifyData, resumeData] = await Promise.all([
       repoPromise,
-      spotifyPromise
+      spotifyPromise,
+      resumePromise
     ])
 
     repositories = repoData
     if (spotifyData) {
       spotifyTrack = spotifyData
     }
+    if (resumeData && resumeData.length > 0) {
+      resumeSections = resumeData
+    }
 
     // Initialize even if we couldn't get repositories
     init()
     document.getElementById('loading').style.display = 'none'
   } catch (error) {
-    console.error('Error loading repositories:', error)
+    console.error('Error loading data:', error)
     
     // Still init the museum with resume sections only if there's an error
     repositories = []
