@@ -41,7 +41,7 @@ const CONFIG = {
   LIGHTING: {
     AMBIENT: {
       COLOR: 0x404040,
-      INTENSITY: 0.3 // Reduced from 0.5 for more dramatic museum atmosphere
+      INTENSITY: 0.7 // Increased for better visibility
     },
     FLASHLIGHT: {
       COLOR: 0xffffff,
@@ -240,15 +240,30 @@ class Painting {
   addSpotlight() {
     const spotlight = new THREE.SpotLight(
       CONFIG.LIGHTING.PAINTING_SPOT.COLOR,
-      CONFIG.LIGHTING.PAINTING_SPOT.INTENSITY,
-      CONFIG.LIGHTING.PAINTING_SPOT.DISTANCE,
-      CONFIG.LIGHTING.PAINTING_SPOT.ANGLE,
-      CONFIG.LIGHTING.PAINTING_SPOT.PENUMBRA,
-      CONFIG.LIGHTING.PAINTING_SPOT.DECAY
+      CONFIG.LIGHTING.PAINTING_SPOT.INTENSITY
     )
+    
+    // Set optional parameters if supported by the THREE.js version
+    if (spotlight.distance !== undefined) {
+      spotlight.distance = CONFIG.LIGHTING.PAINTING_SPOT.DISTANCE
+    }
+    if (spotlight.angle !== undefined) {
+      spotlight.angle = CONFIG.LIGHTING.PAINTING_SPOT.ANGLE
+    }
+    if (spotlight.penumbra !== undefined) {
+      spotlight.penumbra = CONFIG.LIGHTING.PAINTING_SPOT.PENUMBRA
+    }
+    if (spotlight.decay !== undefined) {
+      spotlight.decay = CONFIG.LIGHTING.PAINTING_SPOT.DECAY
+    }
+    
     spotlight.castShadow = true
-    spotlight.shadow.mapSize.set(512, 512)
-    spotlight.shadow.bias = -0.0001
+    if (spotlight.shadow && spotlight.shadow.mapSize) {
+      spotlight.shadow.mapSize.set(512, 512)
+    }
+    if (spotlight.shadow && spotlight.shadow.bias !== undefined) {
+      spotlight.shadow.bias = -0.0001
+    }
     
     // Position the spotlight above the painting
     let spotlightX = this.x
@@ -449,14 +464,16 @@ async function loadRepositories() {
       spotifyTrack = spotifyData
     }
 
-    if (repositories.length > 0) {
-      init()
-      document.getElementById('loading').style.display = 'none'
-    }
+    // Initialize even if we couldn't get repositories
+    init()
+    document.getElementById('loading').style.display = 'none'
   } catch (error) {
     console.error('Error loading repositories:', error)
-    document.getElementById('loading').innerHTML =
-      'Error loading repositories. Please refresh.'
+    
+    // Still init the museum with resume sections only if there's an error
+    repositories = []
+    init()
+    document.getElementById('loading').style.display = 'none'
   }
 }
 
@@ -470,10 +487,10 @@ function init() {
   camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z)
 
   scene = new THREE.Scene()
-  // Darker background for museum atmosphere
-  scene.background = new THREE.Color(0x111111) 
-  // Slightly denser fog for atmospheric effect
-  scene.fog = new THREE.Fog(0x111111, 10, 22)
+  // Museum atmosphere background color
+  scene.background = new THREE.Color(0x1a2c42) // Using original CONFIG.COLORS.BACKGROUND
+  // Lighter fog for better visibility 
+  scene.fog = new THREE.Fog(0x1a2c42, 15, 30)
 
   const ambientLight = new THREE.AmbientLight(
     CONFIG.LIGHTING.AMBIENT.COLOR,
@@ -483,15 +500,30 @@ function init() {
 
   flashlight = new THREE.SpotLight(
     CONFIG.LIGHTING.FLASHLIGHT.COLOR,
-    CONFIG.LIGHTING.FLASHLIGHT.INTENSITY,
-    CONFIG.LIGHTING.FLASHLIGHT.DISTANCE,
-    CONFIG.LIGHTING.FLASHLIGHT.ANGLE,
-    CONFIG.LIGHTING.FLASHLIGHT.PENUMBRA,
-    CONFIG.LIGHTING.FLASHLIGHT.DECAY
+    CONFIG.LIGHTING.FLASHLIGHT.INTENSITY
   )
+  
+  // Set optional parameters if supported by the THREE.js version
+  if (flashlight.distance !== undefined) {
+    flashlight.distance = CONFIG.LIGHTING.FLASHLIGHT.DISTANCE
+  }
+  if (flashlight.angle !== undefined) {
+    flashlight.angle = CONFIG.LIGHTING.FLASHLIGHT.ANGLE
+  }
+  if (flashlight.penumbra !== undefined) {
+    flashlight.penumbra = CONFIG.LIGHTING.FLASHLIGHT.PENUMBRA
+  }
+  if (flashlight.decay !== undefined) {
+    flashlight.decay = CONFIG.LIGHTING.FLASHLIGHT.DECAY
+  }
+  
   flashlight.castShadow = true
-  flashlight.shadow.mapSize.set(1024, 1024)
-  flashlight.shadow.bias = -0.0001
+  if (flashlight.shadow && flashlight.shadow.mapSize) {
+    flashlight.shadow.mapSize.set(1024, 1024)
+  }
+  if (flashlight.shadow && flashlight.shadow.bias !== undefined) {
+    flashlight.shadow.bias = -0.0001
+  }
   flashlight.position.set(0, 0, 0)
   flashlight.target.position.set(0, 0, -1)
 
@@ -506,13 +538,23 @@ function init() {
 
   const spotLight1 = new THREE.SpotLight(
     CONFIG.LIGHTING.SPOT.COLOR,
-    CONFIG.LIGHTING.SPOT.INTENSITY,
-    CONFIG.LIGHTING.SPOT.DISTANCE,
-    CONFIG.LIGHTING.SPOT.ANGLE,
-    CONFIG.LIGHTING.SPOT.PENUMBRA
+    CONFIG.LIGHTING.SPOT.INTENSITY
   )
+  // Set optional parameters if supported
+  if (spotLight1.distance !== undefined) {
+    spotLight1.distance = CONFIG.LIGHTING.SPOT.DISTANCE
+  }
+  if (spotLight1.angle !== undefined) {
+    spotLight1.angle = CONFIG.LIGHTING.SPOT.ANGLE
+  }
+  if (spotLight1.penumbra !== undefined) {
+    spotLight1.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
+  }
+  
   spotLight1.castShadow = true
-  spotLight1.shadow.mapSize.set(1024, 1024)
+  if (spotLight1.shadow && spotLight1.shadow.mapSize) {
+    spotLight1.shadow.mapSize.set(1024, 1024)
+  }
   spotLight1.position.set(
     CONFIG.ROOM_SIZE / 2,
     CONFIG.WALL_HEIGHT - 1,
@@ -522,13 +564,23 @@ function init() {
 
   const spotLight2 = new THREE.SpotLight(
     CONFIG.LIGHTING.SPOT.COLOR,
-    CONFIG.LIGHTING.SPOT.INTENSITY,
-    CONFIG.LIGHTING.SPOT.DISTANCE,
-    CONFIG.LIGHTING.SPOT.ANGLE,
-    CONFIG.LIGHTING.SPOT.PENUMBRA
+    CONFIG.LIGHTING.SPOT.INTENSITY
   )
+  // Set optional parameters if supported
+  if (spotLight2.distance !== undefined) {
+    spotLight2.distance = CONFIG.LIGHTING.SPOT.DISTANCE
+  }
+  if (spotLight2.angle !== undefined) {
+    spotLight2.angle = CONFIG.LIGHTING.SPOT.ANGLE
+  }
+  if (spotLight2.penumbra !== undefined) {
+    spotLight2.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
+  }
+  
   spotLight2.castShadow = true
-  spotLight2.shadow.mapSize.set(1024, 1024)
+  if (spotLight2.shadow && spotLight2.shadow.mapSize) {
+    spotLight2.shadow.mapSize.set(1024, 1024)
+  }
   spotLight2.position.set(
     -CONFIG.ROOM_SIZE / 2,
     CONFIG.WALL_HEIGHT - 1,
@@ -551,8 +603,8 @@ function init() {
   floorCanvas.height = 1024
   const floorCtx = floorCanvas.getContext('2d')
   
-  // Base dark color for marble
-  floorCtx.fillStyle = '#111111'
+  // Base color for marble (lighter)
+  floorCtx.fillStyle = '#333333'
   floorCtx.fillRect(0, 0, floorCanvas.width, floorCanvas.height)
   
   // Add subtle marble veins
@@ -607,8 +659,7 @@ function init() {
   const floorMaterial = new THREE.MeshStandardMaterial({
     map: floorTexture,
     roughness: 0.05,  // Very low roughness for glossiness
-    metalness: 0.3,
-    envMapIntensity: 2.0  // Increase environment map intensity for more reflections
+    metalness: 0.3
   })
   const floor = new THREE.Mesh(floorGeometry, floorMaterial)
   floor.rotation.x = -Math.PI / 2
@@ -637,26 +688,22 @@ function init() {
   const panelSize = ceilingCanvas.width / 8
   const panelInset = 10
   
+  // Draw borders around the panels for a more defined look
+  ceilingCtx.strokeStyle = '#dddddd'
+  ceilingCtx.lineWidth = 2
+  
   for (let x = 0; x < 8; x++) {
     for (let y = 0; y < 8; y++) {
+      // Fill the recessed panel
       ceilingCtx.fillRect(
         x * panelSize + panelInset,
         y * panelSize + panelInset,
         panelSize - panelInset * 2,
         panelSize - panelInset * 2
       )
-    }
-  }
-  
-  // Add subtle shadow to create depth
-  ceilingCtx.shadowBlur = 15
-  ceilingCtx.shadowColor = 'rgba(0, 0, 0, 0.2)'
-  ceilingCtx.shadowOffsetX = 5
-  ceilingCtx.shadowOffsetY = 5
-  
-  for (let x = 0; x < 8; x++) {
-    for (let y = 0; y < 8; y++) {
-      ceilingCtx.fillRect(
+      
+      // Draw the border
+      ceilingCtx.strokeRect(
         x * panelSize + panelInset,
         y * panelSize + panelInset,
         panelSize - panelInset * 2,
@@ -778,9 +825,16 @@ function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true })
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
-  renderer.physicallyCorrectLights = true
-  renderer.outputEncoding = THREE.sRGBEncoding
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
+  // Three.js v0.132.2 may not support some of these settings
+  if (renderer.physicallyCorrectLights !== undefined) {
+    renderer.physicallyCorrectLights = true
+  }
+  if (THREE.sRGBEncoding !== undefined) {
+    renderer.outputEncoding = THREE.sRGBEncoding
+  }
+  if (THREE.ACESFilmicToneMapping !== undefined) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+  }
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   document.body.appendChild(renderer.domElement)
