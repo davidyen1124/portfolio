@@ -2,31 +2,31 @@
   {
     "isResume": true,
     "title": "Summary",
-    "text": "Software engineer, 9+ years. Skilled in JS, TS, Node.js, React, Python.",
+    "text": "Software engineer with 9+ years experience.\nProficient in JS, TS, Node, React, Python.\nFocus on performance optimization.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Typeface (2023–Present)",
-    "text": "Cut bundle size, enhanced search, built components.",
+    "text": "Reduced bundle size by 65%.\nEnhanced search with vector system.\nWon company hackathon 2024.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Houzz (2021–2023)",
-    "text": "Refactored home feed, unified search results.",
+    "text": "Led TypeScript refactoring of home feed.\nDeveloped unified search results page.\nImproved page load performance.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Yahoo (2017–2021)",
-    "text": "Custom report tool, faster generation.",
+    "text": "Built custom campaign reporting tool.\nOptimized report generation by 50%.\nCreated QA monitoring dashboard.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Dcard (2013–2015)",
-    "text": "Redesigned forum, drove user growth.",
+    "text": "Redesigned forum architecture.\nDoubled page views with enhanced UI.\nDrove 10x user growth with new features.",
     "url": "assets/resume.pdf"
   }
 ]

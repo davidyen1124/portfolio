@@ -1003,29 +1003,70 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
 }
 
 function wrapTextLines(context, text, maxWidth, lineHeight, maxLines) {
-  const words = text.split(' ')
-  let line = ''
-  const lines = []
+  // Check if the text contains newline characters
+  if (text.includes('\n')) {
+    // Split by newlines first
+    const textLines = text.split('\n')
+    const lines = []
+    
+    // For each line, apply normal word wrapping if needed
+    for (let i = 0; i < textLines.length && lines.length < maxLines; i++) {
+      const lineWords = textLines[i].split(' ')
+      let currentLine = ''
+      
+      for (let n = 0; n < lineWords.length; n++) {
+        const testLine = currentLine + lineWords[n] + ' '
+        const metrics = context.measureText(testLine)
+        const testWidth = metrics.width
 
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' '
-    const metrics = context.measureText(testLine)
-    const testWidth = metrics.width
-
-    if (testWidth > maxWidth && n > 0) {
-      lines.push(line.trim())
-      line = words[n] + ' '
-      if (lines.length >= maxLines) {
-        lines[lines.length - 1] += '...'
-        return lines
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(currentLine.trim())
+          currentLine = lineWords[n] + ' '
+          if (lines.length >= maxLines) {
+            lines[lines.length - 1] += '...'
+            return lines
+          }
+        } else {
+          currentLine = testLine
+        }
       }
-    } else {
-      line = testLine
+      
+      if (currentLine.trim()) {
+        lines.push(currentLine.trim())
+        if (lines.length >= maxLines) {
+          lines[lines.length - 1] += '...'
+          return lines
+        }
+      }
     }
-  }
+    
+    return lines
+  } else {
+    // Original word wrapping logic for text without newlines
+    const words = text.split(' ')
+    let line = ''
+    const lines = []
 
-  lines.push(line.trim())
-  return lines
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' '
+      const metrics = context.measureText(testLine)
+      const testWidth = metrics.width
+
+      if (testWidth > maxWidth && n > 0) {
+        lines.push(line.trim())
+        line = words[n] + ' '
+        if (lines.length >= maxLines) {
+          lines[lines.length - 1] += '...'
+          return lines
+        }
+      } else {
+        line = testLine
+      }
+    }
+
+    lines.push(line.trim())
+    return lines
+  }
 }
 
 function onWindowResize() {
