@@ -5,6 +5,8 @@
     "color-hex-case": "lower",
     "selector-class-pattern": null,
     "selector-id-pattern": null,
-    "color-function-notation": null
+    "color-function-notation": null,
+    "rule-empty-line-before": null,
+    "alpha-value-notation": "number"
   }
 }
