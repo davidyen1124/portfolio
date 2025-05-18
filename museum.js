@@ -41,7 +41,7 @@ const CONFIG = {
   LIGHTING: {
     AMBIENT: {
       COLOR: 0x404040,
-      INTENSITY: 0.5
+      INTENSITY: 0.7 // Increased for better visibility
     },
     FLASHLIGHT: {
       COLOR: 0xffffff,
@@ -61,6 +61,15 @@ const CONFIG = {
       DISTANCE: 15,
       ANGLE: Math.PI / 4,
       PENUMBRA: 0.5
+    },
+    PAINTING_SPOT: {
+      COLOR: 0xffffff,
+      INTENSITY: 2.0,
+      DISTANCE: 5,
+      ANGLE: Math.PI / 10,
+      PENUMBRA: 0.2,
+      DECAY: 1.5,
+      HEIGHT_OFFSET: 2.5 // Distance above painting for spotlight
     }
   },
 
@@ -169,6 +178,7 @@ class Painting {
       frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_RESUME
     }
 
+    // Create a more sophisticated frame with beveled edges
     const frameGeometry = new THREE.BoxGeometry(
       CONFIG.PAINTING.WIDTH + 0.2,
       CONFIG.PAINTING.HEIGHT + 0.2,
@@ -176,8 +186,8 @@ class Painting {
     )
     const frameMaterial = new THREE.MeshStandardMaterial({
       color: frameColor,
-      roughness: 0.4,
-      metalness: 0.7
+      roughness: 0.2,  // More polished look
+      metalness: 0.8   // More metallic appearance
     })
     const frame = new THREE.Mesh(frameGeometry, frameMaterial)
     frame.castShadow = true
@@ -202,7 +212,7 @@ class Painting {
     )
     const paintingMaterial = new THREE.MeshStandardMaterial({
       map: texture,
-      roughness: 0.5,
+      roughness: 0.4,   // Slightly glossier canvas
       metalness: 0.1,
       emissive: 0x666666,
       emissiveMap: texture
@@ -221,6 +231,61 @@ class Painting {
     painting.userData = this.getUserData(paintingMaterial)
     scene.add(painting)
     paintingMeshes.push(painting)
+    
+    // Removed individual spotlights per painting to prevent WebGL texture limits
+  }
+  
+  // Method to add a spotlight above the painting
+  addSpotlight() {
+    const spotlight = new THREE.SpotLight(
+      CONFIG.LIGHTING.PAINTING_SPOT.COLOR,
+      CONFIG.LIGHTING.PAINTING_SPOT.INTENSITY
+    )
+    
+    // Set optional parameters if supported by the THREE.js version
+    if (spotlight.distance !== undefined) {
+      spotlight.distance = CONFIG.LIGHTING.PAINTING_SPOT.DISTANCE
+    }
+    if (spotlight.angle !== undefined) {
+      spotlight.angle = CONFIG.LIGHTING.PAINTING_SPOT.ANGLE
+    }
+    if (spotlight.penumbra !== undefined) {
+      spotlight.penumbra = CONFIG.LIGHTING.PAINTING_SPOT.PENUMBRA
+    }
+    if (spotlight.decay !== undefined) {
+      spotlight.decay = CONFIG.LIGHTING.PAINTING_SPOT.DECAY
+    }
+    
+    spotlight.castShadow = true
+    if (spotlight.shadow && spotlight.shadow.mapSize) {
+      spotlight.shadow.mapSize.set(512, 512)
+    }
+    if (spotlight.shadow && spotlight.shadow.bias !== undefined) {
+      spotlight.shadow.bias = -0.0001
+    }
+    
+    // Position the spotlight above the painting
+    let spotlightX = this.x
+    let spotlightY = this.y + CONFIG.LIGHTING.PAINTING_SPOT.HEIGHT_OFFSET
+    let spotlightZ = this.z
+    
+    // Target position adjustment based on painting orientation
+    let targetX = this.x
+    let targetY = this.y
+    let targetZ = this.z
+    
+    spotlight.position.set(spotlightX, spotlightY, spotlightZ)
+    
+    // Create and position the target
+    const targetObject = new THREE.Object3D()
+    targetObject.position.set(targetX, targetY, targetZ)
+    scene.add(targetObject)
+    
+    // Set the spotlight to point at the target
+    spotlight.target = targetObject
+    
+    // Add the spotlight to the scene
+    scene.add(spotlight)
   }
 }
 
@@ -398,14 +463,16 @@ async function loadRepositories() {
       spotifyTrack = spotifyData
     }
 
-    if (repositories.length > 0) {
-      init()
-      document.getElementById('loading').style.display = 'none'
-    }
+    // Initialize even if we couldn't get repositories
+    init()
+    document.getElementById('loading').style.display = 'none'
   } catch (error) {
     console.error('Error loading repositories:', error)
-    document.getElementById('loading').innerHTML =
-      'Error loading repositories. Please refresh.'
+    
+    // Still init the museum with resume sections only if there's an error
+    repositories = []
+    init()
+    document.getElementById('loading').style.display = 'none'
   }
 }
 
@@ -419,26 +486,72 @@ function init() {
   camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z)
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(CONFIG.COLORS.BACKGROUND)
-  scene.fog = new THREE.Fog(CONFIG.COLORS.BACKGROUND, 8, 20)
+  // Museum atmosphere background color
+  scene.background = new THREE.Color(0x1a2c42) // Using original CONFIG.COLORS.BACKGROUND
+  // Lighter fog for better visibility 
+  scene.fog = new THREE.Fog(0x1a2c42, 15, 30)
 
   const ambientLight = new THREE.AmbientLight(
     CONFIG.LIGHTING.AMBIENT.COLOR,
     CONFIG.LIGHTING.AMBIENT.INTENSITY
   )
   scene.add(ambientLight)
+  
+  // Add a few global spotlights to illuminate the paintings instead of individual lights
+  // North wall spotlight
+  const northWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  northWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE/2)
+  northWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, -CONFIG.ROOM_SIZE + 0.5)
+  scene.add(northWallLight)
+  scene.add(northWallLight.target)
+  
+  // South wall spotlight
+  const southWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  southWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE/2)
+  southWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, CONFIG.ROOM_SIZE - 0.5)
+  scene.add(southWallLight)
+  scene.add(southWallLight.target)
+  
+  // East wall spotlight
+  const eastWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  eastWallLight.position.set(CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
+  eastWallLight.target.position.set(CONFIG.ROOM_SIZE - 0.5, CONFIG.PAINTING.ELEVATION, 0)
+  scene.add(eastWallLight)
+  scene.add(eastWallLight.target)
+  
+  // West wall spotlight
+  const westWallLight = new THREE.SpotLight(0xffffff, 1.0)
+  westWallLight.position.set(-CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
+  westWallLight.target.position.set(-CONFIG.ROOM_SIZE + 0.5, CONFIG.PAINTING.ELEVATION, 0)
+  scene.add(westWallLight)
+  scene.add(westWallLight.target)
 
   flashlight = new THREE.SpotLight(
     CONFIG.LIGHTING.FLASHLIGHT.COLOR,
-    CONFIG.LIGHTING.FLASHLIGHT.INTENSITY,
-    CONFIG.LIGHTING.FLASHLIGHT.DISTANCE,
-    CONFIG.LIGHTING.FLASHLIGHT.ANGLE,
-    CONFIG.LIGHTING.FLASHLIGHT.PENUMBRA,
-    CONFIG.LIGHTING.FLASHLIGHT.DECAY
+    CONFIG.LIGHTING.FLASHLIGHT.INTENSITY
   )
+  
+  // Set optional parameters if supported by the THREE.js version
+  if (flashlight.distance !== undefined) {
+    flashlight.distance = CONFIG.LIGHTING.FLASHLIGHT.DISTANCE
+  }
+  if (flashlight.angle !== undefined) {
+    flashlight.angle = CONFIG.LIGHTING.FLASHLIGHT.ANGLE
+  }
+  if (flashlight.penumbra !== undefined) {
+    flashlight.penumbra = CONFIG.LIGHTING.FLASHLIGHT.PENUMBRA
+  }
+  if (flashlight.decay !== undefined) {
+    flashlight.decay = CONFIG.LIGHTING.FLASHLIGHT.DECAY
+  }
+  
   flashlight.castShadow = true
-  flashlight.shadow.mapSize.set(1024, 1024)
-  flashlight.shadow.bias = -0.0001
+  if (flashlight.shadow && flashlight.shadow.mapSize) {
+    flashlight.shadow.mapSize.set(1024, 1024)
+  }
+  if (flashlight.shadow && flashlight.shadow.bias !== undefined) {
+    flashlight.shadow.bias = -0.0001
+  }
   flashlight.position.set(0, 0, 0)
   flashlight.target.position.set(0, 0, -1)
 
@@ -453,13 +566,23 @@ function init() {
 
   const spotLight1 = new THREE.SpotLight(
     CONFIG.LIGHTING.SPOT.COLOR,
-    CONFIG.LIGHTING.SPOT.INTENSITY,
-    CONFIG.LIGHTING.SPOT.DISTANCE,
-    CONFIG.LIGHTING.SPOT.ANGLE,
-    CONFIG.LIGHTING.SPOT.PENUMBRA
+    CONFIG.LIGHTING.SPOT.INTENSITY
   )
+  // Set optional parameters if supported
+  if (spotLight1.distance !== undefined) {
+    spotLight1.distance = CONFIG.LIGHTING.SPOT.DISTANCE
+  }
+  if (spotLight1.angle !== undefined) {
+    spotLight1.angle = CONFIG.LIGHTING.SPOT.ANGLE
+  }
+  if (spotLight1.penumbra !== undefined) {
+    spotLight1.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
+  }
+  
   spotLight1.castShadow = true
-  spotLight1.shadow.mapSize.set(1024, 1024)
+  if (spotLight1.shadow && spotLight1.shadow.mapSize) {
+    spotLight1.shadow.mapSize.set(1024, 1024)
+  }
   spotLight1.position.set(
     CONFIG.ROOM_SIZE / 2,
     CONFIG.WALL_HEIGHT - 1,
@@ -469,13 +592,23 @@ function init() {
 
   const spotLight2 = new THREE.SpotLight(
     CONFIG.LIGHTING.SPOT.COLOR,
-    CONFIG.LIGHTING.SPOT.INTENSITY,
-    CONFIG.LIGHTING.SPOT.DISTANCE,
-    CONFIG.LIGHTING.SPOT.ANGLE,
-    CONFIG.LIGHTING.SPOT.PENUMBRA
+    CONFIG.LIGHTING.SPOT.INTENSITY
   )
+  // Set optional parameters if supported
+  if (spotLight2.distance !== undefined) {
+    spotLight2.distance = CONFIG.LIGHTING.SPOT.DISTANCE
+  }
+  if (spotLight2.angle !== undefined) {
+    spotLight2.angle = CONFIG.LIGHTING.SPOT.ANGLE
+  }
+  if (spotLight2.penumbra !== undefined) {
+    spotLight2.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
+  }
+  
   spotLight2.castShadow = true
-  spotLight2.shadow.mapSize.set(1024, 1024)
+  if (spotLight2.shadow && spotLight2.shadow.mapSize) {
+    spotLight2.shadow.mapSize.set(1024, 1024)
+  }
   spotLight2.position.set(
     -CONFIG.ROOM_SIZE / 2,
     CONFIG.WALL_HEIGHT - 1,
@@ -492,30 +625,13 @@ function init() {
     CONFIG.ROOM_SIZE * 2
   )
 
-  const floorCanvas = document.createElement('canvas')
-  floorCanvas.width = 512
-  floorCanvas.height = 512
-  const floorCtx = floorCanvas.getContext('2d')
-  floorCtx.fillStyle = '#3a3a3a'
-  floorCtx.fillRect(0, 0, floorCanvas.width, floorCanvas.height)
-  floorCtx.strokeStyle = '#444'
-  floorCtx.lineWidth = 4
-  const step = floorCanvas.width / 8
-  for (let i = 0; i <= 8; i++) {
-    floorCtx.beginPath()
-    floorCtx.moveTo(i * step, 0)
-    floorCtx.lineTo(i * step, floorCanvas.height)
-    floorCtx.moveTo(0, i * step)
-    floorCtx.lineTo(floorCanvas.width, i * step)
-    floorCtx.stroke()
-  }
-  const floorTexture = new THREE.CanvasTexture(floorCanvas)
-  floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
-  floorTexture.repeat.set(CONFIG.ROOM_SIZE / 5, CONFIG.ROOM_SIZE / 5)
+  // Simplify floor - just use a color instead of texture to reduce WebGL resources
+  const floorColor = 0x333333
 
+  // Create glossy floor material - simplified to just use color
   const floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTexture,
-    roughness: 0.7,
+    color: floorColor,
+    roughness: 0.05,  // Very low roughness for glossiness
     metalness: 0.3
   })
   const floor = new THREE.Mesh(floorGeometry, floorMaterial)
@@ -524,15 +640,19 @@ function init() {
   floor.receiveShadow = true
   scene.add(floor)
 
+  // Create a more detailed ceiling with recessed panels - common in museums
   const ceilingGeometry = new THREE.PlaneGeometry(
     CONFIG.ROOM_SIZE * 2,
     CONFIG.ROOM_SIZE * 2
   )
+  
+  // Simplify ceiling - just use a color instead of texture
   const ceilingMaterial = new THREE.MeshStandardMaterial({
-    color: CONFIG.COLORS.CEILING,
+    color: 0xffffff,
     roughness: 0.9,
-    metalness: 0.15
+    metalness: 0.0
   })
+  
   const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial)
   ceiling.rotation.x = Math.PI / 2
   ceiling.position.y = CONFIG.WALL_HEIGHT
@@ -573,43 +693,43 @@ function init() {
 
     const onKeyDown = function (event) {
       switch (event.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          moveForward = true
-          break
-        case 'ArrowLeft':
-        case 'KeyA':
-          moveLeft = true
-          break
-        case 'ArrowDown':
-        case 'KeyS':
-          moveBackward = true
-          break
-        case 'ArrowRight':
-        case 'KeyD':
-          moveRight = true
-          break
+      case 'ArrowUp':
+      case 'KeyW':
+        moveForward = true
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        moveLeft = true
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        moveBackward = true
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        moveRight = true
+        break
       }
     }
 
     const onKeyUp = function (event) {
       switch (event.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          moveForward = false
-          break
-        case 'ArrowLeft':
-        case 'KeyA':
-          moveLeft = false
-          break
-        case 'ArrowDown':
-        case 'KeyS':
-          moveBackward = false
-          break
-        case 'ArrowRight':
-        case 'KeyD':
-          moveRight = false
-          break
+      case 'ArrowUp':
+      case 'KeyW':
+        moveForward = false
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        moveLeft = false
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        moveBackward = false
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        moveRight = false
+        break
       }
     }
 
@@ -635,9 +755,16 @@ function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true })
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
-  renderer.physicallyCorrectLights = true
-  renderer.outputEncoding = THREE.sRGBEncoding
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
+  // Three.js v0.132.2 may not support some of these settings
+  if (renderer.physicallyCorrectLights !== undefined) {
+    renderer.physicallyCorrectLights = true
+  }
+  if (THREE.sRGBEncoding !== undefined) {
+    renderer.outputEncoding = THREE.sRGBEncoding
+  }
+  if (THREE.ACESFilmicToneMapping !== undefined) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+  }
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   document.body.appendChild(renderer.domElement)
@@ -648,10 +775,11 @@ function init() {
 }
 
 function createWalls() {
+  // Simplified wall material - just use color instead of texture
   const wallMaterial = new THREE.MeshStandardMaterial({
-    color: CONFIG.COLORS.WALLS,
-    roughness: 0.8,
-    metalness: 0.2
+    color: 0xf5f5f0, // Light off-white
+    roughness: 0.9,  // Matte finish
+    metalness: 0.0   // No metallic properties
   })
 
   const northWallGeometry = new THREE.BoxGeometry(
@@ -697,6 +825,37 @@ function createWalls() {
   westWall.receiveShadow = true
   westWall.position.set(-CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, 0)
   scene.add(westWall)
+  
+  // Add baseboards along the walls (a common museum feature)
+  const baseboardMaterial = new THREE.MeshStandardMaterial({
+    color: 0x222222, // Dark color for baseboards
+    roughness: 0.5,
+    metalness: 0.2
+  })
+  
+  // North baseboard
+  const northBaseboardGeometry = new THREE.BoxGeometry(CONFIG.ROOM_SIZE * 2, 0.3, 0.12)
+  const northBaseboard = new THREE.Mesh(northBaseboardGeometry, baseboardMaterial)
+  northBaseboard.position.set(0, 0.15, -CONFIG.ROOM_SIZE + 0.06)
+  scene.add(northBaseboard)
+  
+  // South baseboard
+  const southBaseboardGeometry = new THREE.BoxGeometry(CONFIG.ROOM_SIZE * 2, 0.3, 0.12)
+  const southBaseboard = new THREE.Mesh(southBaseboardGeometry, baseboardMaterial)
+  southBaseboard.position.set(0, 0.15, CONFIG.ROOM_SIZE - 0.06)
+  scene.add(southBaseboard)
+  
+  // East baseboard
+  const eastBaseboardGeometry = new THREE.BoxGeometry(0.12, 0.3, CONFIG.ROOM_SIZE * 2)
+  const eastBaseboard = new THREE.Mesh(eastBaseboardGeometry, baseboardMaterial)
+  eastBaseboard.position.set(CONFIG.ROOM_SIZE - 0.06, 0.15, 0)
+  scene.add(eastBaseboard)
+  
+  // West baseboard
+  const westBaseboardGeometry = new THREE.BoxGeometry(0.12, 0.3, CONFIG.ROOM_SIZE * 2)
+  const westBaseboard = new THREE.Mesh(westBaseboardGeometry, baseboardMaterial)
+  westBaseboard.position.set(-CONFIG.ROOM_SIZE + 0.06, 0.15, 0)
+  scene.add(westBaseboard)
 }
 
 function createPaintings() {
@@ -708,7 +867,12 @@ function createPaintings() {
 
   // Adjust repository list so each wall has the same number of paintings
   // and spacing meets the minimum requirement
-  while (true) {
+  let layoutAdjusted = false
+  const maxIterations = 100 // Safety limit to prevent infinite loops
+  let iterations = 0
+  
+  while (!layoutAdjusted && iterations < maxIterations) {
+    iterations++
     const totalPaintings =
       resumeSections.length +
       repositories.length +
@@ -729,7 +893,7 @@ function createPaintings() {
       continue
     }
 
-    break
+    layoutAdjusted = true
   }
 
   const basePaintings = [...resumeSections, ...repositories]
@@ -762,26 +926,26 @@ function createPaintings() {
       let x, z, rotation
 
       switch (wallIndex) {
-        case 0:
-          x = pos
-          z = -CONFIG.ROOM_SIZE + wallOffset
-          rotation = 0
-          break
-        case 1:
-          x = CONFIG.ROOM_SIZE - wallOffset
-          z = pos
-          rotation = -Math.PI / 2
-          break
-        case 2:
-          x = pos
-          z = CONFIG.ROOM_SIZE - wallOffset
-          rotation = Math.PI
-          break
-        case 3:
-          x = -CONFIG.ROOM_SIZE + wallOffset
-          z = pos
-          rotation = Math.PI / 2
-          break
+      case 0:
+        x = pos
+        z = -CONFIG.ROOM_SIZE + wallOffset
+        rotation = 0
+        break
+      case 1:
+        x = CONFIG.ROOM_SIZE - wallOffset
+        z = pos
+        rotation = -Math.PI / 2
+        break
+      case 2:
+        x = pos
+        z = CONFIG.ROOM_SIZE - wallOffset
+        rotation = Math.PI
+        break
+      case 3:
+        x = -CONFIG.ROOM_SIZE + wallOffset
+        z = pos
+        rotation = Math.PI / 2
+        break
       }
 
       if (painting.isSpotify) {
