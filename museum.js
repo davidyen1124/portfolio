@@ -41,7 +41,7 @@ const CONFIG = {
   LIGHTING: {
     AMBIENT: {
       COLOR: 0x404040,
-      INTENSITY: 0.5
+      INTENSITY: 0.3 // Reduced from 0.5 for more dramatic museum atmosphere
     },
     FLASHLIGHT: {
       COLOR: 0xffffff,
@@ -61,6 +61,15 @@ const CONFIG = {
       DISTANCE: 15,
       ANGLE: Math.PI / 4,
       PENUMBRA: 0.5
+    },
+    PAINTING_SPOT: {
+      COLOR: 0xffffff,
+      INTENSITY: 2.0,
+      DISTANCE: 5,
+      ANGLE: Math.PI / 10,
+      PENUMBRA: 0.2,
+      DECAY: 1.5,
+      HEIGHT_OFFSET: 2.5 // Distance above painting for spotlight
     }
   },
 
@@ -169,6 +178,7 @@ class Painting {
       frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_RESUME
     }
 
+    // Create a more sophisticated frame with beveled edges
     const frameGeometry = new THREE.BoxGeometry(
       CONFIG.PAINTING.WIDTH + 0.2,
       CONFIG.PAINTING.HEIGHT + 0.2,
@@ -176,8 +186,8 @@ class Painting {
     )
     const frameMaterial = new THREE.MeshStandardMaterial({
       color: frameColor,
-      roughness: 0.4,
-      metalness: 0.7
+      roughness: 0.2,  // More polished look
+      metalness: 0.8   // More metallic appearance
     })
     const frame = new THREE.Mesh(frameGeometry, frameMaterial)
     frame.castShadow = true
@@ -202,7 +212,7 @@ class Painting {
     )
     const paintingMaterial = new THREE.MeshStandardMaterial({
       map: texture,
-      roughness: 0.5,
+      roughness: 0.4,   // Slightly glossier canvas
       metalness: 0.1,
       emissive: 0x666666,
       emissiveMap: texture
@@ -221,6 +231,47 @@ class Painting {
     painting.userData = this.getUserData(paintingMaterial)
     scene.add(painting)
     paintingMeshes.push(painting)
+    
+    // Add a spotlight directly above the painting
+    this.addSpotlight()
+  }
+  
+  // Method to add a spotlight above the painting
+  addSpotlight() {
+    const spotlight = new THREE.SpotLight(
+      CONFIG.LIGHTING.PAINTING_SPOT.COLOR,
+      CONFIG.LIGHTING.PAINTING_SPOT.INTENSITY,
+      CONFIG.LIGHTING.PAINTING_SPOT.DISTANCE,
+      CONFIG.LIGHTING.PAINTING_SPOT.ANGLE,
+      CONFIG.LIGHTING.PAINTING_SPOT.PENUMBRA,
+      CONFIG.LIGHTING.PAINTING_SPOT.DECAY
+    )
+    spotlight.castShadow = true
+    spotlight.shadow.mapSize.set(512, 512)
+    spotlight.shadow.bias = -0.0001
+    
+    // Position the spotlight above the painting
+    let spotlightX = this.x
+    let spotlightY = this.y + CONFIG.LIGHTING.PAINTING_SPOT.HEIGHT_OFFSET
+    let spotlightZ = this.z
+    
+    // Target position adjustment based on painting orientation
+    let targetX = this.x
+    let targetY = this.y
+    let targetZ = this.z
+    
+    spotlight.position.set(spotlightX, spotlightY, spotlightZ)
+    
+    // Create and position the target
+    const targetObject = new THREE.Object3D()
+    targetObject.position.set(targetX, targetY, targetZ)
+    scene.add(targetObject)
+    
+    // Set the spotlight to point at the target
+    spotlight.target = targetObject
+    
+    // Add the spotlight to the scene
+    scene.add(spotlight)
   }
 }
 
@@ -419,8 +470,10 @@ function init() {
   camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z)
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(CONFIG.COLORS.BACKGROUND)
-  scene.fog = new THREE.Fog(CONFIG.COLORS.BACKGROUND, 8, 20)
+  // Darker background for museum atmosphere
+  scene.background = new THREE.Color(0x111111) 
+  // Slightly denser fog for atmospheric effect
+  scene.fog = new THREE.Fog(0x111111, 10, 22)
 
   const ambientLight = new THREE.AmbientLight(
     CONFIG.LIGHTING.AMBIENT.COLOR,
@@ -492,31 +545,70 @@ function init() {
     CONFIG.ROOM_SIZE * 2
   )
 
+  // Create glossy marble-like floor texture
   const floorCanvas = document.createElement('canvas')
-  floorCanvas.width = 512
-  floorCanvas.height = 512
+  floorCanvas.width = 1024
+  floorCanvas.height = 1024
   const floorCtx = floorCanvas.getContext('2d')
-  floorCtx.fillStyle = '#3a3a3a'
+  
+  // Base dark color for marble
+  floorCtx.fillStyle = '#111111'
   floorCtx.fillRect(0, 0, floorCanvas.width, floorCanvas.height)
-  floorCtx.strokeStyle = '#444'
-  floorCtx.lineWidth = 4
-  const step = floorCanvas.width / 8
-  for (let i = 0; i <= 8; i++) {
+  
+  // Add subtle marble veins
+  floorCtx.strokeStyle = 'rgba(40, 40, 45, 0.7)'
+  floorCtx.lineWidth = 2
+  
+  // Create random marble veins
+  for (let i = 0; i < 30; i++) {
+    const startX = Math.random() * floorCanvas.width
+    const startY = Math.random() * floorCanvas.height
     floorCtx.beginPath()
-    floorCtx.moveTo(i * step, 0)
-    floorCtx.lineTo(i * step, floorCanvas.height)
-    floorCtx.moveTo(0, i * step)
-    floorCtx.lineTo(floorCanvas.width, i * step)
+    floorCtx.moveTo(startX, startY)
+    
+    let lastX = startX
+    let lastY = startY
+    
+    // Create curvy veins
+    for (let j = 0; j < 5; j++) {
+      const controlX1 = lastX + (Math.random() * 200 - 100)
+      const controlY1 = lastY + (Math.random() * 200 - 100)
+      const controlX2 = lastX + (Math.random() * 200 - 100)
+      const controlY2 = lastY + (Math.random() * 200 - 100)
+      const endX = lastX + (Math.random() * 200 - 100)
+      const endY = lastY + (Math.random() * 200 - 100)
+      
+      floorCtx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, endX, endY)
+      lastX = endX
+      lastY = endY
+    }
+    
     floorCtx.stroke()
   }
+  
+  // Add subtle grid lines for tiles
+  floorCtx.strokeStyle = 'rgba(30, 30, 35, 0.6)'
+  floorCtx.lineWidth = 1
+  const tileSize = floorCanvas.width / 8
+  for (let i = 0; i <= 8; i++) {
+    floorCtx.beginPath()
+    floorCtx.moveTo(i * tileSize, 0)
+    floorCtx.lineTo(i * tileSize, floorCanvas.height)
+    floorCtx.moveTo(0, i * tileSize)
+    floorCtx.lineTo(floorCanvas.width, i * tileSize)
+    floorCtx.stroke()
+  }
+  
   const floorTexture = new THREE.CanvasTexture(floorCanvas)
   floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
-  floorTexture.repeat.set(CONFIG.ROOM_SIZE / 5, CONFIG.ROOM_SIZE / 5)
+  floorTexture.repeat.set(CONFIG.ROOM_SIZE / 4, CONFIG.ROOM_SIZE / 4)
 
+  // Create glossy floor material
   const floorMaterial = new THREE.MeshStandardMaterial({
     map: floorTexture,
-    roughness: 0.7,
-    metalness: 0.3
+    roughness: 0.05,  // Very low roughness for glossiness
+    metalness: 0.3,
+    envMapIntensity: 2.0  // Increase environment map intensity for more reflections
   })
   const floor = new THREE.Mesh(floorGeometry, floorMaterial)
   floor.rotation.x = -Math.PI / 2
@@ -524,15 +616,66 @@ function init() {
   floor.receiveShadow = true
   scene.add(floor)
 
+  // Create a more detailed ceiling with recessed panels - common in museums
   const ceilingGeometry = new THREE.PlaneGeometry(
     CONFIG.ROOM_SIZE * 2,
     CONFIG.ROOM_SIZE * 2
   )
+  
+  // Create ceiling texture with recessed panels
+  const ceilingCanvas = document.createElement('canvas')
+  ceilingCanvas.width = 1024
+  ceilingCanvas.height = 1024
+  const ceilingCtx = ceilingCanvas.getContext('2d')
+  
+  // Base white color
+  ceilingCtx.fillStyle = '#ffffff'
+  ceilingCtx.fillRect(0, 0, ceilingCanvas.width, ceilingCanvas.height)
+  
+  // Create grid pattern for recessed ceiling panels
+  ceilingCtx.fillStyle = '#f0f0f0'
+  const panelSize = ceilingCanvas.width / 8
+  const panelInset = 10
+  
+  for (let x = 0; x < 8; x++) {
+    for (let y = 0; y < 8; y++) {
+      ceilingCtx.fillRect(
+        x * panelSize + panelInset,
+        y * panelSize + panelInset,
+        panelSize - panelInset * 2,
+        panelSize - panelInset * 2
+      )
+    }
+  }
+  
+  // Add subtle shadow to create depth
+  ceilingCtx.shadowBlur = 15
+  ceilingCtx.shadowColor = 'rgba(0, 0, 0, 0.2)'
+  ceilingCtx.shadowOffsetX = 5
+  ceilingCtx.shadowOffsetY = 5
+  
+  for (let x = 0; x < 8; x++) {
+    for (let y = 0; y < 8; y++) {
+      ceilingCtx.fillRect(
+        x * panelSize + panelInset,
+        y * panelSize + panelInset,
+        panelSize - panelInset * 2,
+        panelSize - panelInset * 2
+      )
+    }
+  }
+  
+  const ceilingTexture = new THREE.CanvasTexture(ceilingCanvas)
+  ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping
+  ceilingTexture.repeat.set(1, 1)
+  
   const ceilingMaterial = new THREE.MeshStandardMaterial({
-    color: CONFIG.COLORS.CEILING,
+    map: ceilingTexture,
     roughness: 0.9,
-    metalness: 0.15
+    metalness: 0.0,
+    color: 0xffffff
   })
+  
   const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial)
   ceiling.rotation.x = Math.PI / 2
   ceiling.position.y = CONFIG.WALL_HEIGHT
@@ -573,43 +716,43 @@ function init() {
 
     const onKeyDown = function (event) {
       switch (event.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          moveForward = true
-          break
-        case 'ArrowLeft':
-        case 'KeyA':
-          moveLeft = true
-          break
-        case 'ArrowDown':
-        case 'KeyS':
-          moveBackward = true
-          break
-        case 'ArrowRight':
-        case 'KeyD':
-          moveRight = true
-          break
+      case 'ArrowUp':
+      case 'KeyW':
+        moveForward = true
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        moveLeft = true
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        moveBackward = true
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        moveRight = true
+        break
       }
     }
 
     const onKeyUp = function (event) {
       switch (event.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          moveForward = false
-          break
-        case 'ArrowLeft':
-        case 'KeyA':
-          moveLeft = false
-          break
-        case 'ArrowDown':
-        case 'KeyS':
-          moveBackward = false
-          break
-        case 'ArrowRight':
-        case 'KeyD':
-          moveRight = false
-          break
+      case 'ArrowUp':
+      case 'KeyW':
+        moveForward = false
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        moveLeft = false
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        moveBackward = false
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        moveRight = false
+        break
       }
     }
 
@@ -648,10 +791,38 @@ function init() {
 }
 
 function createWalls() {
+  // Create canvas texture for wall
+  const wallCanvas = document.createElement('canvas')
+  wallCanvas.width = 1024
+  wallCanvas.height = 1024
+  const wallCtx = wallCanvas.getContext('2d')
+  
+  // Create subtle wall texture (light cream color with slight texture)
+  wallCtx.fillStyle = '#f0f0e8' // Light cream/off-white
+  wallCtx.fillRect(0, 0, wallCanvas.width, wallCanvas.height)
+  
+  // Add subtle noise pattern
+  wallCtx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+  for (let i = 0; i < 5000; i++) {
+    const x = Math.random() * wallCanvas.width
+    const y = Math.random() * wallCanvas.height
+    const size = Math.random() * 2 + 1
+    wallCtx.beginPath()
+    wallCtx.arc(x, y, size, 0, Math.PI * 2)
+    wallCtx.fill()
+  }
+  
+  // Create wall texture
+  const wallTexture = new THREE.CanvasTexture(wallCanvas)
+  wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping
+  wallTexture.repeat.set(2, 1)
+  
+  // Elegant museum wall material
   const wallMaterial = new THREE.MeshStandardMaterial({
-    color: CONFIG.COLORS.WALLS,
-    roughness: 0.8,
-    metalness: 0.2
+    map: wallTexture,
+    color: 0xf5f5f0, // Light off-white
+    roughness: 0.9,  // Matte finish
+    metalness: 0.0   // No metallic properties
   })
 
   const northWallGeometry = new THREE.BoxGeometry(
@@ -697,6 +868,37 @@ function createWalls() {
   westWall.receiveShadow = true
   westWall.position.set(-CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, 0)
   scene.add(westWall)
+  
+  // Add baseboards along the walls (a common museum feature)
+  const baseboardMaterial = new THREE.MeshStandardMaterial({
+    color: 0x222222, // Dark color for baseboards
+    roughness: 0.5,
+    metalness: 0.2
+  })
+  
+  // North baseboard
+  const northBaseboardGeometry = new THREE.BoxGeometry(CONFIG.ROOM_SIZE * 2, 0.3, 0.12)
+  const northBaseboard = new THREE.Mesh(northBaseboardGeometry, baseboardMaterial)
+  northBaseboard.position.set(0, 0.15, -CONFIG.ROOM_SIZE + 0.06)
+  scene.add(northBaseboard)
+  
+  // South baseboard
+  const southBaseboardGeometry = new THREE.BoxGeometry(CONFIG.ROOM_SIZE * 2, 0.3, 0.12)
+  const southBaseboard = new THREE.Mesh(southBaseboardGeometry, baseboardMaterial)
+  southBaseboard.position.set(0, 0.15, CONFIG.ROOM_SIZE - 0.06)
+  scene.add(southBaseboard)
+  
+  // East baseboard
+  const eastBaseboardGeometry = new THREE.BoxGeometry(0.12, 0.3, CONFIG.ROOM_SIZE * 2)
+  const eastBaseboard = new THREE.Mesh(eastBaseboardGeometry, baseboardMaterial)
+  eastBaseboard.position.set(CONFIG.ROOM_SIZE - 0.06, 0.15, 0)
+  scene.add(eastBaseboard)
+  
+  // West baseboard
+  const westBaseboardGeometry = new THREE.BoxGeometry(0.12, 0.3, CONFIG.ROOM_SIZE * 2)
+  const westBaseboard = new THREE.Mesh(westBaseboardGeometry, baseboardMaterial)
+  westBaseboard.position.set(-CONFIG.ROOM_SIZE + 0.06, 0.15, 0)
+  scene.add(westBaseboard)
 }
 
 function createPaintings() {
@@ -708,7 +910,12 @@ function createPaintings() {
 
   // Adjust repository list so each wall has the same number of paintings
   // and spacing meets the minimum requirement
-  while (true) {
+  let layoutAdjusted = false
+  const maxIterations = 100 // Safety limit to prevent infinite loops
+  let iterations = 0
+  
+  while (!layoutAdjusted && iterations < maxIterations) {
+    iterations++
     const totalPaintings =
       resumeSections.length +
       repositories.length +
@@ -729,7 +936,7 @@ function createPaintings() {
       continue
     }
 
-    break
+    layoutAdjusted = true
   }
 
   const basePaintings = [...resumeSections, ...repositories]
@@ -762,26 +969,26 @@ function createPaintings() {
       let x, z, rotation
 
       switch (wallIndex) {
-        case 0:
-          x = pos
-          z = -CONFIG.ROOM_SIZE + wallOffset
-          rotation = 0
-          break
-        case 1:
-          x = CONFIG.ROOM_SIZE - wallOffset
-          z = pos
-          rotation = -Math.PI / 2
-          break
-        case 2:
-          x = pos
-          z = CONFIG.ROOM_SIZE - wallOffset
-          rotation = Math.PI
-          break
-        case 3:
-          x = -CONFIG.ROOM_SIZE + wallOffset
-          z = pos
-          rotation = Math.PI / 2
-          break
+      case 0:
+        x = pos
+        z = -CONFIG.ROOM_SIZE + wallOffset
+        rotation = 0
+        break
+      case 1:
+        x = CONFIG.ROOM_SIZE - wallOffset
+        z = pos
+        rotation = -Math.PI / 2
+        break
+      case 2:
+        x = pos
+        z = CONFIG.ROOM_SIZE - wallOffset
+        rotation = Math.PI
+        break
+      case 3:
+        x = -CONFIG.ROOM_SIZE + wallOffset
+        z = pos
+        rotation = Math.PI / 2
+        break
       }
 
       if (painting.isSpotify) {
