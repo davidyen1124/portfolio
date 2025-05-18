@@ -27,6 +27,7 @@ Keep an eye out for the special Spotify exhibit! It's like those audio guides at
 - Spotify integration (because every gallery needs a soundtrack)
 - Résumé sections displayed right on the gallery walls
 - Fancy lighting and glossy floors (to make my code look better than it actually is)
+- Physically based rendering materials for more realistic lighting and shadows
 - Mobile-friendly controls (art appreciation for the bus commute)
 - Optimized performance (so your device doesn't burst into flames)
 - No gift shop (sorry, not sorry)

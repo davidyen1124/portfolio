@@ -152,10 +152,12 @@ class Painting {
       CONFIG.PAINTING.HEIGHT + 0.2,
       frameThickness
     )
-    const frameMaterial = new THREE.MeshStandardMaterial({
+    const frameMaterial = new THREE.MeshPhysicalMaterial({
       color: frameColor,
       roughness: 0.2,  // More polished look
-      metalness: 0.8   // More metallic appearance
+      metalness: 0.8,
+      clearcoat: 0.1,
+      reflectivity: 0.9
     })
     const frame = new THREE.Mesh(frameGeometry, frameMaterial)
     frame.castShadow = true
@@ -178,12 +180,14 @@ class Painting {
       CONFIG.PAINTING.HEIGHT,
       0.05
     )
-    const paintingMaterial = new THREE.MeshStandardMaterial({
+    const paintingMaterial = new THREE.MeshPhysicalMaterial({
       map: texture,
       roughness: 0.4,   // Slightly glossier canvas
       metalness: 0.1,
       emissive: 0x666666,
-      emissiveMap: texture
+      emissiveMap: texture,
+      clearcoat: 0.05,
+      reflectivity: 0.2
     })
     const painting = new THREE.Mesh(paintingGeometry, paintingMaterial)
     painting.castShadow = true
@@ -607,10 +611,12 @@ function init() {
   const floorColor = 0x333333
 
   // Create glossy floor material - simplified to just use color
-  const floorMaterial = new THREE.MeshStandardMaterial({
+  const floorMaterial = new THREE.MeshPhysicalMaterial({
     color: floorColor,
     roughness: 0.05,  // Very low roughness for glossiness
-    metalness: 0.3
+    metalness: 0.6,
+    clearcoat: 0.6,
+    reflectivity: 0.8
   })
   const floor = new THREE.Mesh(floorGeometry, floorMaterial)
   floor.rotation.x = -Math.PI / 2
@@ -625,10 +631,11 @@ function init() {
   )
   
   // Simplify ceiling - just use a color instead of texture
-  const ceilingMaterial = new THREE.MeshStandardMaterial({
+  const ceilingMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     roughness: 0.9,
-    metalness: 0.0
+    metalness: 0.05,
+    reflectivity: 0.1
   })
   
   const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial)
@@ -743,6 +750,9 @@ function init() {
   if (THREE.ACESFilmicToneMapping !== undefined) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping
   }
+  if (renderer.toneMappingExposure !== undefined) {
+    renderer.toneMappingExposure = 1.0
+  }
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   document.body.appendChild(renderer.domElement)
@@ -754,10 +764,11 @@ function init() {
 
 function createWalls() {
   // Simplified wall material - just use color instead of texture
-  const wallMaterial = new THREE.MeshStandardMaterial({
+  const wallMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xf5f5f0, // Light off-white
-    roughness: 0.9,  // Matte finish
-    metalness: 0.0   // No metallic properties
+    roughness: 0.8,  // Matte finish
+    metalness: 0.05,
+    reflectivity: 0.05
   })
 
   const northWallGeometry = new THREE.BoxGeometry(
@@ -805,10 +816,11 @@ function createWalls() {
   scene.add(westWall)
   
   // Add baseboards along the walls (a common museum feature)
-  const baseboardMaterial = new THREE.MeshStandardMaterial({
+  const baseboardMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x222222, // Dark color for baseboards
     roughness: 0.5,
-    metalness: 0.2
+    metalness: 0.2,
+    reflectivity: 0.3
   })
   
   // North baseboard
