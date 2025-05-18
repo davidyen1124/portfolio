@@ -14,6 +14,7 @@ Behold, a groundbreaking innovation in personal portfolio presentation! Instead 
 2. **Mouse** - Wave it around like you're conducting an orchestra
 3. **Click** - To interact with the exhibits (yes, you're actually allowed to touch these)
 4. **Paintings** - They're not NFTs, I promise. Click them to interact
+5. **Mobile Users** - Virtual joysticks appear for those who prefer their art on-the-go
 
 ## 🎵 Special Exhibition
 
@@ -25,7 +26,9 @@ Keep an eye out for the special Spotify exhibit! It's like those audio guides at
 - Real-time GitHub repository displays (yes, I'm showing off)
 - Spotify integration (because every gallery needs a soundtrack)
 - Résumé sections displayed right on the gallery walls
-- Fancy lighting (to make my code look better than it actually is)
+- Fancy lighting and glossy floors (to make my code look better than it actually is)
+- Mobile-friendly controls (art appreciation for the bus commute)
+- Optimized performance (so your device doesn't burst into flames)
 - No gift shop (sorry, not sorry)
 
 ## 🏃‍♂️ Quick Start
@@ -49,6 +52,7 @@ Free! (But I accept GitHub stars as donations)
 - No running in the corridors
 - No asking "but why didn't you just use a normal website?"
 - No pointing out that this is totally overengineered
+- No complaining if your ancient device struggles with WebGL
 
 ## 👨‍💻 Curator
 
