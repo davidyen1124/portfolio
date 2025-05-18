@@ -420,7 +420,7 @@ async function loadRepositories() {
         console.error('Error loading Spotify data:', spotifyError)
         return null
       })
-    const resumePromise = fetch('resume.json')
+    const resumePromise = fetch('assets/resume.json')
       .then((res) => res.json())
       .catch((resumeError) => {
         console.error('Error loading resume data:', resumeError)
