@@ -481,33 +481,25 @@ function init() {
   scene.add(ambientLight)
   
   // Add a few global spotlights to illuminate the paintings instead of individual lights
-  // North wall spotlight
-  const northWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  northWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE/2)
-  northWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, -CONFIG.ROOM_SIZE + 0.5)
-  scene.add(northWallLight)
-  scene.add(northWallLight.target)
-  
-  // South wall spotlight
-  const southWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  southWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE/2)
-  southWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, CONFIG.ROOM_SIZE - 0.5)
-  scene.add(southWallLight)
-  scene.add(southWallLight.target)
-  
-  // East wall spotlight
-  const eastWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  eastWallLight.position.set(CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
-  eastWallLight.target.position.set(CONFIG.ROOM_SIZE - 0.5, CONFIG.PAINTING.ELEVATION, 0)
-  scene.add(eastWallLight)
-  scene.add(eastWallLight.target)
-  
-  // West wall spotlight
-  const westWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  westWallLight.position.set(-CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
-  westWallLight.target.position.set(-CONFIG.ROOM_SIZE + 0.5, CONFIG.PAINTING.ELEVATION, 0)
-  scene.add(westWallLight)
-  scene.add(westWallLight.target)
+  const wallLights = [
+    [
+      new THREE.Vector3(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE / 2),
+      new THREE.Vector3(0, CONFIG.PAINTING.ELEVATION, -CONFIG.ROOM_SIZE + 0.5)
+    ],
+    [
+      new THREE.Vector3(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE / 2),
+      new THREE.Vector3(0, CONFIG.PAINTING.ELEVATION, CONFIG.ROOM_SIZE - 0.5)
+    ],
+    [
+      new THREE.Vector3(CONFIG.ROOM_SIZE / 2, CONFIG.WALL_HEIGHT - 1, 0),
+      new THREE.Vector3(CONFIG.ROOM_SIZE - 0.5, CONFIG.PAINTING.ELEVATION, 0)
+    ],
+    [
+      new THREE.Vector3(-CONFIG.ROOM_SIZE / 2, CONFIG.WALL_HEIGHT - 1, 0),
+      new THREE.Vector3(-CONFIG.ROOM_SIZE + 0.5, CONFIG.PAINTING.ELEVATION, 0)
+    ]
+  ]
+  wallLights.forEach(([position, target]) => createWallSpotlight(position, target))
 
   flashlight = new THREE.SpotLight(
     CONFIG.LIGHTING.FLASHLIGHT.COLOR,
@@ -989,6 +981,14 @@ function createPainting(data, x, y, z, rotation, isSpotify = false, isResume = f
     painting = new RepoPainting(data, x, y, z, rotation)
   }
   painting.create()
+}
+
+function createWallSpotlight(position, target) {
+  const light = new THREE.SpotLight(0xffffff, 1.0)
+  light.position.copy(position)
+  light.target.position.copy(target)
+  scene.add(light)
+  scene.add(light.target)
 }
 
 
