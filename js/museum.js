@@ -208,58 +208,6 @@ class Painting {
     // Removed individual spotlights per painting to prevent WebGL texture limits
   }
   
-  // Method to add a spotlight above the painting
-  addSpotlight() {
-    const spotlight = new THREE.SpotLight(
-      CONFIG.LIGHTING.PAINTING_SPOT.COLOR,
-      CONFIG.LIGHTING.PAINTING_SPOT.INTENSITY
-    )
-    
-    // Set optional parameters if supported by the THREE.js version
-    if (spotlight.distance !== undefined) {
-      spotlight.distance = CONFIG.LIGHTING.PAINTING_SPOT.DISTANCE
-    }
-    if (spotlight.angle !== undefined) {
-      spotlight.angle = CONFIG.LIGHTING.PAINTING_SPOT.ANGLE
-    }
-    if (spotlight.penumbra !== undefined) {
-      spotlight.penumbra = CONFIG.LIGHTING.PAINTING_SPOT.PENUMBRA
-    }
-    if (spotlight.decay !== undefined) {
-      spotlight.decay = CONFIG.LIGHTING.PAINTING_SPOT.DECAY
-    }
-    
-    spotlight.castShadow = true
-    if (spotlight.shadow && spotlight.shadow.mapSize) {
-      spotlight.shadow.mapSize.set(512, 512)
-    }
-    if (spotlight.shadow && spotlight.shadow.bias !== undefined) {
-      spotlight.shadow.bias = -0.0001
-    }
-    
-    // Position the spotlight above the painting
-    let spotlightX = this.x
-    let spotlightY = this.y + CONFIG.LIGHTING.PAINTING_SPOT.HEIGHT_OFFSET
-    let spotlightZ = this.z
-    
-    // Target position adjustment based on painting orientation
-    let targetX = this.x
-    let targetY = this.y
-    let targetZ = this.z
-    
-    spotlight.position.set(spotlightX, spotlightY, spotlightZ)
-    
-    // Create and position the target
-    const targetObject = new THREE.Object3D()
-    targetObject.position.set(targetX, targetY, targetZ)
-    scene.add(targetObject)
-    
-    // Set the spotlight to point at the target
-    spotlight.target = targetObject
-    
-    // Add the spotlight to the scene
-    scene.add(spotlight)
-  }
 }
 
 class RepoPainting extends Painting {
