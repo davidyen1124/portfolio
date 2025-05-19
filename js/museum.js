@@ -480,34 +480,33 @@ function init() {
   )
   scene.add(ambientLight)
   
-  // Add a few global spotlights to illuminate the paintings instead of individual lights
-  // North wall spotlight
-  const northWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  northWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE/2)
-  northWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, -CONFIG.ROOM_SIZE + 0.5)
+  // Use rectangular lights for even illumination along each wall
+  if (THREE.RectAreaLightUniformsLib && THREE.RectAreaLightUniformsLib.init) {
+    THREE.RectAreaLightUniformsLib.init()
+  }
+
+  const wallLightWidth = CONFIG.ROOM_SIZE * 2
+  const wallLightHeight = 2
+
+  const northWallLight = new THREE.RectAreaLight(0xffffff, 4, wallLightWidth, wallLightHeight)
+  northWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE + 0.2)
+  northWallLight.lookAt(0, CONFIG.PAINTING.ELEVATION, 0)
   scene.add(northWallLight)
-  scene.add(northWallLight.target)
-  
-  // South wall spotlight
-  const southWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  southWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE/2)
-  southWallLight.target.position.set(0, CONFIG.PAINTING.ELEVATION, CONFIG.ROOM_SIZE - 0.5)
+
+  const southWallLight = new THREE.RectAreaLight(0xffffff, 4, wallLightWidth, wallLightHeight)
+  southWallLight.position.set(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE - 0.2)
+  southWallLight.lookAt(0, CONFIG.PAINTING.ELEVATION, 0)
   scene.add(southWallLight)
-  scene.add(southWallLight.target)
-  
-  // East wall spotlight
-  const eastWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  eastWallLight.position.set(CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
-  eastWallLight.target.position.set(CONFIG.ROOM_SIZE - 0.5, CONFIG.PAINTING.ELEVATION, 0)
+
+  const eastWallLight = new THREE.RectAreaLight(0xffffff, 4, wallLightWidth, wallLightHeight)
+  eastWallLight.position.set(CONFIG.ROOM_SIZE - 0.2, CONFIG.WALL_HEIGHT - 1, 0)
+  eastWallLight.lookAt(0, CONFIG.PAINTING.ELEVATION, 0)
   scene.add(eastWallLight)
-  scene.add(eastWallLight.target)
-  
-  // West wall spotlight
-  const westWallLight = new THREE.SpotLight(0xffffff, 1.0)
-  westWallLight.position.set(-CONFIG.ROOM_SIZE/2, CONFIG.WALL_HEIGHT - 1, 0)
-  westWallLight.target.position.set(-CONFIG.ROOM_SIZE + 0.5, CONFIG.PAINTING.ELEVATION, 0)
+
+  const westWallLight = new THREE.RectAreaLight(0xffffff, 4, wallLightWidth, wallLightHeight)
+  westWallLight.position.set(-CONFIG.ROOM_SIZE + 0.2, CONFIG.WALL_HEIGHT - 1, 0)
+  westWallLight.lookAt(0, CONFIG.PAINTING.ELEVATION, 0)
   scene.add(westWallLight)
-  scene.add(westWallLight.target)
 
   flashlight = new THREE.SpotLight(
     CONFIG.LIGHTING.FLASHLIGHT.COLOR,
