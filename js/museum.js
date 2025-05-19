@@ -900,6 +900,15 @@ function createPaintings() {
     })
   }
 
+  const summaryIndex = allPaintings.findIndex(
+    p => p.isResume && p.title === 'Summary'
+  )
+  if (summaryIndex !== -1) {
+    const [summaryItem] = allPaintings.splice(summaryIndex, 1)
+    const centerIndex = Math.floor(paintingsPerWall / 2)
+    allPaintings.splice(centerIndex, 0, summaryItem)
+  }
+
   const spaceBetween =
     (availableLength - paintingWidth * paintingsPerWall) /
     (paintingsPerWall + 1)
