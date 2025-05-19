@@ -692,6 +692,9 @@ function init() {
       case 'KeyD':
         moveRight = true
         break
+      case 'KeyF':
+        flashlight.visible = !flashlight.visible
+        break
       case 'Space':
         if (canJump) {
           verticalVelocity = CONFIG.MOVEMENT.JUMP_SPEED
