@@ -109,6 +109,12 @@ let paintingMeshes = []
 let spotifyTrack = null
 let resumeSections = []
 
+// Parse URL parameters
+const urlParams = new URLSearchParams(window.location.search)
+const customGithubUser = urlParams.get('github')
+const isCustomUser = customGithubUser && customGithubUser !== 'davidyen1124'
+const githubUsername = customGithubUser || 'davidyen1124'
+
 let isMobile = false
 let joystickRightX = 0
 let joystickRightY = 0
@@ -130,7 +136,7 @@ class Painting {
     this.rotation = rotation
   }
 
-  drawContent(context, texture) {}
+  drawContent() {}
 
   getUserData(material) {
     return { originalMaterial: material.clone() }
@@ -363,48 +369,74 @@ class ResumePainting extends Painting {
 async function loadRepositories() {
   try {
     const repoPromise = fetch(
-      'https://api.github.com/users/davidyen1124/repos?sort=updated&per_page=20'
+      `https://api.github.com/users/${githubUsername}/repos?sort=updated&per_page=20`
     ).then((res) => res.json())
-    const spotifyPromise = fetch(
-      'https://spotify.daviddennislinda.com/api/recently-played'
-    )
-      .then((res) => res.json())
-      .catch((spotifyError) => {
-        console.error('Error loading Spotify data:', spotifyError)
-        return null
-      })
-    const resumePromise = fetch('assets/resume.json')
-      .then((res) => res.json())
-      .catch((resumeError) => {
-        console.error('Error loading resume data:', resumeError)
-        return []
-      })
-
-    const [repoData, spotifyData, resumeData] = await Promise.all([
-      repoPromise,
-      spotifyPromise,
-      resumePromise
-    ])
-
-    repositories = repoData
-    if (spotifyData) {
-      spotifyTrack = spotifyData
-    }
-    if (resumeData && resumeData.length > 0) {
-      resumeSections = resumeData
+    
+    const promises = [repoPromise]
+    
+    // Only load Spotify and resume data for default user
+    if (!isCustomUser) {
+      const spotifyPromise = fetch(
+        'https://spotify.daviddennislinda.com/api/recently-played'
+      )
+        .then((res) => res.json())
+        .catch((spotifyError) => {
+          console.error('Error loading Spotify data:', spotifyError)
+          return null
+        })
+      const resumePromise = fetch('assets/resume.json')
+        .then((res) => res.json())
+        .catch((resumeError) => {
+          console.error('Error loading resume data:', resumeError)
+          return []
+        })
+      
+      promises.push(spotifyPromise, resumePromise)
     }
 
+    const results = await Promise.all(promises)
+    const repoData = results[0]
+    
+    repositories = repoData || []
+    
+    if (!isCustomUser && results.length > 1) {
+      const spotifyData = results[1]
+      const resumeData = results[2]
+      
+      if (spotifyData) {
+        spotifyTrack = spotifyData
+      }
+      if (resumeData && resumeData.length > 0) {
+        resumeSections = resumeData
+      }
+    }
+
+    // Update page title and heading
+    updatePageTitle()
+    
     // Initialize even if we couldn't get repositories
     init()
     document.getElementById('loading').style.display = 'none'
   } catch (error) {
     console.error('Error loading data:', error)
     
-    // Still init the museum with resume sections only if there's an error
+    // Update page title and heading
+    updatePageTitle()
+    
+    // Still init the museum
     repositories = []
     init()
     document.getElementById('loading').style.display = 'none'
   }
+}
+
+function updatePageTitle() {
+  const title = isCustomUser ? `${githubUsername}'s GitHub Portfolio` : "David Yen's Personal Museum"
+  const pageTitle = document.getElementById('page-title')
+  const museumTitle = document.getElementById('museum-title')
+  
+  if (pageTitle) pageTitle.textContent = title
+  if (museumTitle) museumTitle.textContent = title
 }
 
 function init() {
@@ -807,10 +839,9 @@ function createPaintings() {
   
   while (!layoutAdjusted && iterations < maxIterations) {
     iterations++
-    const totalPaintings =
-      resumeSections.length +
-      repositories.length +
-      (spotifyTrack ? 1 : 0)
+    const totalPaintings = isCustomUser ? 
+      repositories.length :
+      resumeSections.length + repositories.length + (spotifyTrack ? 1 : 0)
 
     if (totalPaintings % wallCount !== 0) {
       const removeCount = totalPaintings % wallCount
@@ -830,12 +861,13 @@ function createPaintings() {
     layoutAdjusted = true
   }
 
-  const basePaintings = [...resumeSections, ...repositories]
+  // Only include resume sections and Spotify for default user
+  const basePaintings = isCustomUser ? [...repositories] : [...resumeSections, ...repositories]
   let allPaintings = [...basePaintings]
   const paintingsPerWall =
-    (basePaintings.length + (spotifyTrack ? 1 : 0)) / wallCount
+    (basePaintings.length + (!isCustomUser && spotifyTrack ? 1 : 0)) / wallCount
 
-  if (spotifyTrack) {
+  if (!isCustomUser && spotifyTrack) {
     const centerIndex = Math.floor(paintingsPerWall / 2)
     allPaintings.splice(centerIndex, 0, {
       isSpotify: true,
@@ -843,13 +875,15 @@ function createPaintings() {
     })
   }
 
-  const summaryIndex = allPaintings.findIndex(
-    p => p.isResume && p.title === 'Summary'
-  )
-  if (summaryIndex !== -1) {
-    const [summaryItem] = allPaintings.splice(summaryIndex, 1)
-    const centerIndex = Math.floor(paintingsPerWall / 2)
-    allPaintings.splice(centerIndex, 0, summaryItem)
+  if (!isCustomUser) {
+    const summaryIndex = allPaintings.findIndex(
+      p => p.isResume && p.title === 'Summary'
+    )
+    if (summaryIndex !== -1) {
+      const [summaryItem] = allPaintings.splice(summaryIndex, 1)
+      const centerIndex = Math.floor(paintingsPerWall / 2)
+      allPaintings.splice(centerIndex, 0, summaryItem)
+    }
   }
 
   const spaceBetween =
@@ -1085,8 +1119,6 @@ function initJoysticks() {
   let leftCenter = { x: 0, y: 0 }
   let rightTouchId = null
   let rightCenter = { x: 0, y: 0 }
-  let lastRightTouchX = 0
-  let lastRightTouchY = 0
 
   function handleTouchStart(e) {
     e.preventDefault()
@@ -1116,8 +1148,6 @@ function initJoysticks() {
           x: rectRight.left + rectRight.width / 2,
           y: rectRight.top + rectRight.height / 2
         }
-        lastRightTouchX = touch.pageX
-        lastRightTouchY = touch.pageY
       }
     }
   }
