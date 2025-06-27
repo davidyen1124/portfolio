@@ -2,31 +2,37 @@
   {
     "isResume": true,
     "title": "Summary",
-    "text": "Software engineer with 9+ years experience.\nProficient in JS, TS, Node, React, Python.\nFocus on performance optimization.",
+    "text": "Full-stack engineer with 9+ years across SaaS, marketplace, ad-tech, and social products.\nHeavy hands-on with JavaScript & TypeScript.\nCut load time 65%, scaled throughput 10x, shipped 150k+ installs.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Typeface (2023–Present)",
-    "text": "Reduced bundle size by 65%.\nEnhanced search with vector system.\nWon company hackathon 2024.",
+    "text": "Reduced JS bundle 65% via code-splitting.\nRefactored WebSockets, eliminating error spikes.\nShipped Canva plugin for major enterprise deal.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Houzz (2021–2023)",
-    "text": "Led TypeScript refactoring of home feed.\nDeveloped unified search results page.\nImproved page load performance.",
+    "text": "Refactored home feed to TypeScript components.\nBuilt unified search, lifting engagement.\nCut photo-page LCP with lazy hydration.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Yahoo (2017–2021)",
-    "text": "Built custom campaign reporting tool.\nOptimized report generation by 50%.\nCreated QA monitoring dashboard.",
+    "text": "Shipped self-serve cohort-reporting tool.\nConverted pipeline to async, halving report time.\nBuilt React dashboard flagging anomalies.",
     "url": "assets/resume.pdf"
   },
   {
     "isResume": true,
     "title": "Dcard (2013–2015)",
-    "text": "Redesigned forum architecture.\nDoubled page views with enhanced UI.\nDrove 10x user growth with new features.",
+    "text": "Re-architected MongoDB forum for 10x growth.\nDoubled page views with modal viewer.\nDeployed push notifications across AWS zones.",
+    "url": "assets/resume.pdf"
+  },
+  {
+    "isResume": true,
+    "title": "Sparks Lab & CHOCOLABS",
+    "text": "Published 4 Android apps (150k+ installs).\nWon 2 national 1st-place awards.\nScaled backend users 1k → 10k with Express + MongoDB.",
     "url": "assets/resume.pdf"
   }
 ]
