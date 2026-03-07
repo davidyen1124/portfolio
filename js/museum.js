@@ -1,22 +1,19 @@
 const CONFIG = {
-  WALL_HEIGHT: 5,
-  ROOM_SIZE: 15,
+  WALL_HEIGHT: 6,
+  ROOM_SIZE: 16,
+  WALL_THICKNESS: 0.8,
 
   PAINTING: {
-    WIDTH: 2.5,
-    HEIGHT: 2,
-    SPACING: 3,
-    ELEVATION: 1.5,
-    FRAME_THICKNESS: 0.1,
-    FRAME_THICKNESS_REPO: 0.1,
-    FRAME_THICKNESS_SPOTIFY: 0.08,
-    FRAME_THICKNESS_RESUME: 0.12,
+    WIDTH: 2.6,
+    HEIGHT: 2.1,
+    ELEVATION: 2.4,
+    FRAME_THICKNESS: 0.2,
+    FRAME_THICKNESS_REPO: 0.22,
+    FRAME_THICKNESS_RESUME: 0.24,
     CANVAS_WIDTH: 512,
     CANVAS_HEIGHT: 341,
-    PAINTINGS_PER_WALL: 3,
-    ALBUM_ART_SIZE: 200,
-    MIN_SPACING: 1.5,
-    WALL_OFFSET: 0.15
+    MIN_SPACING: 1.35,
+    WALL_OFFSET: 0.62
   },
 
   MOVEMENT: {
@@ -25,55 +22,44 @@ const CONFIG = {
     BOUNDARY_OFFSET: 1,
     GRAVITY: 30,
     JUMP_SPEED: 8,
-    GROUND_LEVEL: 1.7
+    GROUND_LEVEL: 1.8
   },
 
   COLORS: {
-    BACKGROUND: 0x1a2c42,
-    FLOOR: 0x1e2d3d,
-    CEILING: 0x213040,
-    WALLS: 0x2c425e,
-    FRAME: 0x7e6338,
-    FRAME_REPO: 0x7e6338,
-    FRAME_SPOTIFY: 0x1db954,
-    FRAME_RESUME: 0x3f6e74,
-    TEXT: '#cccccc',
-    BACKGROUND_DARK: '#1a1a1a'
+    SKY: 0x8bd0ff,
+    FOG: 0xd2efff,
+    PANEL_TEXT: '#fff8d6',
+    PANEL_MUTED: '#cde2a0',
+    REPO_PANEL: '#203d2a',
+    RESUME_PANEL: '#51381f'
   },
 
   LIGHTING: {
     AMBIENT: {
-      COLOR: 0x404040,
-      INTENSITY: 0.7 // Increased for better visibility
-    },
-    FLASHLIGHT: {
       COLOR: 0xffffff,
-      INTENSITY: 1.5,
-      DISTANCE: 15,
-      ANGLE: Math.PI / 6,
-      PENUMBRA: 0.5,
-      DECAY: 1
+      INTENSITY: 0.85
     },
-    RIM: {
-      COLOR: 0xffa366,
-      INTENSITY: 0.3
+    SUN: {
+      COLOR: 0xfff2c2,
+      INTENSITY: 0.7
+    },
+    TORCH: {
+      COLOR: 0xffc86a,
+      INTENSITY: 0.9,
+      DISTANCE: 9
     },
     SPOT: {
-      COLOR: 0xffffcc,
-      INTENSITY: 0.3,
-      DISTANCE: 15,
-      ANGLE: Math.PI / 4,
-      PENUMBRA: 0.5
-    },
-    PAINTING_SPOT: {
-      COLOR: 0xffffff,
-      INTENSITY: 2.0,
-      DISTANCE: 5,
-      ANGLE: Math.PI / 10,
-      PENUMBRA: 0.2,
-      DECAY: 1.5,
-      HEIGHT_OFFSET: 2.5 // Distance above painting for spotlight
+      COLOR: 0xfff3c6,
+      INTENSITY: 0.65,
+      DISTANCE: 20,
+      ANGLE: Math.PI / 5,
+      PENUMBRA: 0.28
     }
+  },
+
+  WORLD: {
+    TILE_SIZE: 16,
+    WALL_REPEAT: 8
   },
 
   LANGUAGE_COLORS: {
@@ -101,12 +87,10 @@ const direction = new THREE.Vector3()
 let verticalVelocity = 0
 let canJump = true
 let raycaster
-let flashlight
 const cameraPos = { x: 0, y: 1.7, z: 0 }
 
 let repositories = []
 let paintingMeshes = []
-let spotifyTrack = null
 let resumeSections = []
 
 // Parse URL parameters
@@ -122,9 +106,219 @@ let mobileYaw = 0
 let mobilePitch = 0
 const mobileLookSpeed = 1.3
 const mobileMovementSpeedFactor = 1
+const textureCache = new Map()
 
 if ('ontouchstart' in window) {
   isMobile = true
+}
+
+function pixelFill(context, color, x, y, width, height) {
+  context.fillStyle = color
+  context.fillRect(x, y, width, height)
+}
+
+function createNoiseTexture(type) {
+  const size = CONFIG.WORLD.TILE_SIZE
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  canvas.width = size
+  canvas.height = size
+
+  switch (type) {
+  case 'stone': {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const stone = ['#8d9699', '#7b8386', '#a7b0b3'][(x + y) % 3]
+        pixelFill(context, stone, x, y, 1, 1)
+      }
+    }
+    for (let y = 0; y < size; y += 4) {
+      pixelFill(context, '#6d7477', 0, y, size, 1)
+    }
+    for (let x = 0; x < size; x += 4) {
+      pixelFill(context, '#b3bbbe', x, 0, 1, size)
+    }
+    break
+  }
+  case 'smoothstone': {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const smooth = ['#b8bcbe', '#a9adaf', '#c7cbcd'][(x + y * 2) % 3]
+        pixelFill(context, smooth, x, y, 1, 1)
+      }
+    }
+    for (let y = 0; y < size; y += 8) {
+      pixelFill(context, '#d9dddf', 0, y, size, 1)
+    }
+    for (let x = 0; x < size; x += 8) {
+      pixelFill(context, '#94989a', x, 0, 1, size)
+    }
+    break
+  }
+  case 'cobble': {
+    pixelFill(context, '#7f878a', 0, 0, size, size)
+    for (let y = 0; y < size; y += 4) {
+      for (let x = 0; x < size; x += 4) {
+        const color = ['#6e7679', '#969ea1', '#878f92'][(x / 4 + y / 4) % 3]
+        pixelFill(context, color, x, y, 4, 4)
+      }
+    }
+    pixelFill(context, '#555d60', 0, 3, size, 1)
+    pixelFill(context, '#555d60', 3, 0, 1, size)
+    break
+  }
+  case 'planks': {
+    pixelFill(context, '#9e723b', 0, 0, size, size)
+    for (let y = 0; y < size; y += 4) {
+      pixelFill(context, '#7b572d', 0, y, size, 1)
+      pixelFill(context, '#bc9053', 0, y + 1, size, 1)
+    }
+    pixelFill(context, '#714d26', 4, 5, 2, 2)
+    pixelFill(context, '#714d26', 10, 11, 2, 2)
+    break
+  }
+  case 'log': {
+    pixelFill(context, '#6d421f', 0, 0, size, size)
+    for (let x = 0; x < size; x += 4) {
+      pixelFill(context, '#8b5b30', x, 0, 2, size)
+    }
+    pixelFill(context, '#4f2f16', 0, 0, 1, size)
+    pixelFill(context, '#4f2f16', size - 1, 0, 1, size)
+    break
+  }
+  case 'glow': {
+    pixelFill(context, '#c68f1f', 0, 0, size, size)
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const glow = ['#ffd867', '#eeb93d', '#fff0ac'][(x + y) % 3]
+        pixelFill(context, glow, x, y, 1, 1)
+      }
+    }
+    pixelFill(context, '#fff8d0', 5, 5, 6, 6)
+    break
+  }
+  }
+
+  return canvas
+}
+
+function getTexture(type, repeatX = 1, repeatY = 1) {
+  const cacheKey = `${type}:${repeatX}:${repeatY}`
+  if (textureCache.has(cacheKey)) {
+    return textureCache.get(cacheKey)
+  }
+
+  const texture = new THREE.CanvasTexture(createNoiseTexture(type))
+  texture.magFilter = THREE.NearestFilter
+  texture.minFilter = THREE.NearestFilter
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(repeatX, repeatY)
+  texture.needsUpdate = true
+  textureCache.set(cacheKey, texture)
+  return texture
+}
+
+function createPixelMaterial(type, repeatX = 1, repeatY = 1, overrides = {}) {
+  return new THREE.MeshStandardMaterial({
+    map: getTexture(type, repeatX, repeatY),
+    roughness: 0.95,
+    metalness: 0.02,
+    ...overrides
+  })
+}
+
+function drawPixelCard(context, panelColor) {
+  context.fillStyle = panelColor
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height)
+
+  context.fillStyle = '#0f0b05'
+  context.fillRect(12, 12, context.canvas.width - 24, context.canvas.height - 24)
+
+  context.fillStyle = panelColor
+  context.fillRect(24, 24, context.canvas.width - 48, context.canvas.height - 48)
+  context.strokeStyle = '#f7d46a'
+  context.lineWidth = 4
+  context.strokeRect(24, 24, context.canvas.width - 48, context.canvas.height - 48)
+}
+
+function clipCardContent(context) {
+  context.save()
+  context.beginPath()
+  context.rect(40, 72, context.canvas.width - 80, context.canvas.height - 120)
+  context.clip()
+}
+
+function unclipCardContent(context) {
+  context.restore()
+}
+
+function fitTextWidth(context, text, maxWidth, initialSize, minSize, weight = 'bold') {
+  let size = initialSize
+  while (size > minSize) {
+    context.font = `${weight} ${size}px monospace`
+    if (context.measureText(text).width <= maxWidth) break
+    size -= 2
+  }
+  context.font = `${weight} ${size}px monospace`
+  return size
+}
+
+function fitWrappedText(context, text, options) {
+  const {
+    maxWidth,
+    maxLines,
+    maxHeight,
+    initialSize,
+    minSize,
+    weight = 'normal'
+  } = options
+
+  let size = initialSize
+  while (size >= minSize) {
+    const lineHeight = Math.round(size * 1.3)
+    context.font = `${weight} ${size}px monospace`
+    const lines = wrapTextLines(context, text, maxWidth, lineHeight, maxLines)
+    const totalHeight = lines.length * lineHeight
+    const widestLine = lines.reduce(
+      (max, line) => Math.max(max, context.measureText(line).width),
+      0
+    )
+
+    if (widestLine <= maxWidth && totalHeight <= maxHeight) {
+      return { lines, size, lineHeight }
+    }
+    size -= 2
+  }
+
+  const fallbackSize = minSize
+  const fallbackLineHeight = Math.round(fallbackSize * 1.3)
+  context.font = `${weight} ${fallbackSize}px monospace`
+  return {
+    lines: wrapTextLines(context, text, maxWidth, fallbackLineHeight, maxLines),
+    size: fallbackSize,
+    lineHeight: fallbackLineHeight
+  }
+}
+
+function drawCenteredLines(context, lines, x, startY, lineHeight) {
+  let y = startY
+  for (const line of lines) {
+    context.fillText(line, x, y)
+    y += lineHeight
+  }
+}
+
+function drawPanelLabel(context, text, x, y, width) {
+  context.fillStyle = '#29180c'
+  context.fillRect(x - width / 2, y - 18, width, 28)
+  context.strokeStyle = '#f7d46a'
+  context.lineWidth = 3
+  context.strokeRect(x - width / 2, y - 18, width, 28)
+  context.fillStyle = '#fff4c7'
+  context.font = 'bold 18px monospace'
+  context.textAlign = 'center'
+  context.fillText(text, x, y + 2)
 }
 
 class Painting {
@@ -142,32 +336,29 @@ class Painting {
     return { originalMaterial: material.clone() }
   }
 
+  getFrameMaterial() {
+    return createPixelMaterial('planks', 1, 1)
+  }
+
+  getAccentColor() {
+    return '#f7d46a'
+  }
+
   create() {
-    let frameColor = CONFIG.COLORS.FRAME
     let frameThickness = CONFIG.PAINTING.FRAME_THICKNESS
 
     if (this instanceof RepoPainting) {
-      frameColor = CONFIG.COLORS.FRAME_REPO
       frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_REPO
-    } else if (this instanceof SpotifyPainting) {
-      frameColor = CONFIG.COLORS.FRAME_SPOTIFY
-      frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_SPOTIFY
     } else if (this instanceof ResumePainting) {
-      frameColor = CONFIG.COLORS.FRAME_RESUME
       frameThickness = CONFIG.PAINTING.FRAME_THICKNESS_RESUME
     }
 
-    // Create a more sophisticated frame with beveled edges
     const frameGeometry = new THREE.BoxGeometry(
-      CONFIG.PAINTING.WIDTH + 0.2,
-      CONFIG.PAINTING.HEIGHT + 0.2,
+      CONFIG.PAINTING.WIDTH + 0.36,
+      CONFIG.PAINTING.HEIGHT + 0.36,
       frameThickness
     )
-    const frameMaterial = new THREE.MeshStandardMaterial({
-      color: frameColor,
-      roughness: 0.2,  // More polished look
-      metalness: 0.8   // More metallic appearance
-    })
+    const frameMaterial = this.getFrameMaterial()
     const frame = new THREE.Mesh(frameGeometry, frameMaterial)
     frame.castShadow = true
     frame.receiveShadow = true
@@ -179,9 +370,10 @@ class Painting {
     canvas.width = CONFIG.PAINTING.CANVAS_WIDTH
     canvas.height = CONFIG.PAINTING.CANVAS_HEIGHT
     const context = canvas.getContext('2d')
-    context.fillStyle = CONFIG.COLORS.BACKGROUND_DARK
-    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.imageSmoothingEnabled = false
     const texture = new THREE.CanvasTexture(canvas)
+    texture.magFilter = THREE.NearestFilter
+    texture.minFilter = THREE.NearestFilter
     this.drawContent(context, texture)
 
     const paintingGeometry = new THREE.BoxGeometry(
@@ -191,57 +383,77 @@ class Painting {
     )
     const paintingMaterial = new THREE.MeshStandardMaterial({
       map: texture,
-      roughness: 0.4,   // Slightly glossier canvas
-      metalness: 0.1,
-      emissive: 0x666666,
+      roughness: 0.85,
+      metalness: 0,
+      emissive: new THREE.Color(this.getAccentColor()),
+      emissiveIntensity: 0.15,
       emissiveMap: texture
     })
     const painting = new THREE.Mesh(paintingGeometry, paintingMaterial)
     painting.castShadow = true
     painting.receiveShadow = true
     painting.position.set(this.x, this.y, this.z)
+    const surfaceOffset = frameThickness / 2 + 0.04
 
-    if (this.rotation === 0) painting.position.z += 0.06
-    else if (this.rotation === Math.PI) painting.position.z -= 0.06
-    else if (this.rotation === Math.PI / 2) painting.position.x += 0.06
-    else if (this.rotation === -Math.PI / 2) painting.position.x -= 0.06
+    if (this.rotation === 0) painting.position.z += surfaceOffset
+    else if (this.rotation === Math.PI) painting.position.z -= surfaceOffset
+    else if (this.rotation === Math.PI / 2) painting.position.x += surfaceOffset
+    else if (this.rotation === -Math.PI / 2) painting.position.x -= surfaceOffset
 
     painting.rotation.y = this.rotation
     painting.userData = this.getUserData(paintingMaterial)
     scene.add(painting)
     paintingMeshes.push(painting)
-    
-    // Removed individual spotlights per painting to prevent WebGL texture limits
+
   }
-  
 }
 
 class RepoPainting extends Painting {
+  getFrameMaterial() {
+    return createPixelMaterial('cobble', 1, 1)
+  }
+
+  getAccentColor() {
+    return '#74d278'
+  }
+
   drawContent(context) {
     const repo = this.data
-    context.fillStyle = CONFIG.COLORS.TEXT
+    drawPixelCard(context, CONFIG.COLORS.REPO_PANEL)
+    drawPanelLabel(context, 'PROJECT', context.canvas.width / 2, 56, 160)
+    clipCardContent(context)
+
     const repoName = repo.name
-    context.font = 'bold 36px Arial'
-    const nameWidth = context.measureText(repoName).width
-    if (nameWidth > context.canvas.width - 40) context.font = 'bold 24px Arial'
+    fitTextWidth(context, repoName, context.canvas.width - 108, 28, 18)
     context.textAlign = 'center'
-    context.fillText(repoName, context.canvas.width / 2, 50)
+    context.fillStyle = CONFIG.COLORS.PANEL_TEXT
+    context.fillText(repoName, context.canvas.width / 2, 108)
+
     if (repo.description) {
-      context.font = '18px Arial'
-      wrapText(
+      const descriptionBlock = fitWrappedText(context, repo.description, {
+        maxWidth: context.canvas.width - 108,
+        maxLines: 4,
+        maxHeight: 92,
+        initialSize: 17,
+        minSize: 13
+      })
+      context.fillStyle = CONFIG.COLORS.PANEL_MUTED
+      context.font = `${descriptionBlock.size}px monospace`
+      drawCenteredLines(
         context,
-        repo.description,
+        descriptionBlock.lines,
         context.canvas.width / 2,
-        100,
-        context.canvas.width - 40,
-        25
+        148,
+        descriptionBlock.lineHeight
       )
     }
-    context.font = '16px Arial'
+
+    context.fillStyle = '#fff4c7'
+    context.font = '16px monospace'
     context.fillText(
-      `⭐ Stars: ${repo.stargazers_count} | 🍴 Forks: ${repo.forks_count}`,
+      `Stars ${repo.stargazers_count} | Forks ${repo.forks_count}`,
       context.canvas.width / 2,
-      context.canvas.height - 80
+      context.canvas.height - 92
     )
     if (repo.language) {
       const langColor = CONFIG.LANGUAGE_COLORS[repo.language] || '#888888'
@@ -255,20 +467,22 @@ class RepoPainting extends Painting {
         2 * Math.PI
       )
       context.fill()
-      context.fillStyle = CONFIG.COLORS.TEXT
+      context.fillStyle = CONFIG.COLORS.PANEL_TEXT
       context.fillText(
         repo.language,
         context.canvas.width / 2,
-        context.canvas.height - 40
+        context.canvas.height - 54
       )
     }
-    context.font = '14px Arial'
+    context.fillStyle = '#d0ecba'
+    context.font = '14px monospace'
     const updated = new Date(repo.updated_at).toLocaleDateString()
     context.fillText(
       `Updated: ${updated}`,
       context.canvas.width / 2,
-      context.canvas.height - 15
+      context.canvas.height - 22
     )
+    unclipCardContent(context)
   }
 
   getUserData(material) {
@@ -280,80 +494,55 @@ class RepoPainting extends Painting {
   }
 }
 
-class SpotifyPainting extends Painting {
-  drawContent(context, texture) {
-    const track = this.data
-    const albumArt = new Image()
-    albumArt.crossOrigin = 'Anonymous'
-    albumArt.onload = function () {
-      context.drawImage(
-        albumArt,
-        (context.canvas.width - CONFIG.PAINTING.ALBUM_ART_SIZE) / 2,
-        30,
-        CONFIG.PAINTING.ALBUM_ART_SIZE,
-        CONFIG.PAINTING.ALBUM_ART_SIZE
-      )
-      context.fillStyle = CONFIG.COLORS.TEXT
-      context.font = 'bold 32px Arial'
-      context.textAlign = 'center'
-      context.fillText(
-        track.name,
-        context.canvas.width / 2,
-        CONFIG.PAINTING.ALBUM_ART_SIZE + 60
-      )
-      context.font = '18px Arial'
-      context.fillText(
-        track.artists,
-        context.canvas.width / 2,
-        CONFIG.PAINTING.ALBUM_ART_SIZE + 100
-      )
-      context.fillText(
-        track.album,
-        context.canvas.width / 2,
-        CONFIG.PAINTING.ALBUM_ART_SIZE + 130
-      )
-      texture.needsUpdate = true
-    }
-    albumArt.src = track.albumArt
-  }
-
-  getUserData(material) {
-    return {
-      url: this.data.spotifyUrl,
-      name: `${this.data.name} by ${this.data.artists}`,
-      originalMaterial: material.clone(),
-      isSpotify: true
-    }
-  }
-}
-
 class ResumePainting extends Painting {
+  getFrameMaterial() {
+    return createPixelMaterial('planks', 1, 1)
+  }
+
+  getAccentColor() {
+    return '#ffde7a'
+  }
+
   drawContent(context) {
     const section = this.data
-    context.font = '18px Arial'
-    const lines = wrapTextLines(
+    drawPixelCard(context, CONFIG.COLORS.RESUME_PANEL)
+    drawPanelLabel(context, 'RESUME', context.canvas.width / 2, 56, 150)
+    clipCardContent(context)
+
+    const titleSize = fitTextWidth(
       context,
-      section.text,
-      context.canvas.width - 40,
-      25,
-      5
+      section.title,
+      context.canvas.width - 108,
+      24,
+      15
     )
-    const titleHeight = 32
-    const gapAfterTitle = 20
-    const totalHeight = titleHeight + gapAfterTitle + lines.length * 25
-    const startY = (context.canvas.height - totalHeight) / 2
-    context.fillStyle = CONFIG.COLORS.TEXT
-    context.font = 'bold 32px Arial'
+    const bodyBlock = fitWrappedText(context, section.text, {
+      maxWidth: context.canvas.width - 108,
+      maxLines: 6,
+      maxHeight: 150,
+      initialSize: 17,
+      minSize: 12
+    })
+    const titleHeight = titleSize + 4
+    const gapAfterTitle = 16
+    const totalHeight = titleHeight + gapAfterTitle + bodyBlock.lines.length * bodyBlock.lineHeight
+    const startY = Math.max(92, (context.canvas.height - totalHeight) / 2)
+    context.fillStyle = CONFIG.COLORS.PANEL_TEXT
+    context.font = `bold ${titleSize}px monospace`
     context.textAlign = 'center'
     context.textBaseline = 'top'
     context.fillText(section.title, context.canvas.width / 2, startY)
-    context.font = '18px Arial'
-    let y = startY + titleHeight + gapAfterTitle
-    for (const line of lines) {
-      context.fillText(line, context.canvas.width / 2, y)
-      y += 25
-    }
+    context.fillStyle = '#eadfb5'
+    context.font = `${bodyBlock.size}px monospace`
+    drawCenteredLines(
+      context,
+      bodyBlock.lines,
+      context.canvas.width / 2,
+      startY + titleHeight + gapAfterTitle,
+      bodyBlock.lineHeight
+    )
     context.textBaseline = 'alphabetic'
+    unclipCardContent(context)
   }
 
   getUserData(material) {
@@ -374,16 +563,8 @@ async function loadRepositories() {
     
     const promises = [repoPromise]
     
-    // Only load Spotify and resume data for default user
+    // Only load resume data for default user
     if (!isCustomUser) {
-      const spotifyPromise = fetch(
-        'https://spotify.daviddennislinda.com/api/recently-played'
-      )
-        .then((res) => res.json())
-        .catch((spotifyError) => {
-          console.error('Error loading Spotify data:', spotifyError)
-          return null
-        })
       const resumePromise = fetch('assets/resume.json')
         .then((res) => res.json())
         .catch((resumeError) => {
@@ -391,7 +572,7 @@ async function loadRepositories() {
           return []
         })
       
-      promises.push(spotifyPromise, resumePromise)
+      promises.push(resumePromise)
     }
 
     const results = await Promise.all(promises)
@@ -400,12 +581,7 @@ async function loadRepositories() {
     repositories = repoData || []
     
     if (!isCustomUser && results.length > 1) {
-      const spotifyData = results[1]
-      const resumeData = results[2]
-      
-      if (spotifyData) {
-        spotifyTrack = spotifyData
-      }
+      const resumeData = results[1]
       if (resumeData && resumeData.length > 0) {
         resumeSections = resumeData
       }
@@ -431,7 +607,7 @@ async function loadRepositories() {
 }
 
 function updatePageTitle() {
-  const title = isCustomUser ? `${githubUsername}'s GitHub Portfolio` : "David Yen's Personal Museum"
+  const title = isCustomUser ? githubUsername : 'David Yen'
   const pageTitle = document.getElementById('page-title')
   const museumTitle = document.getElementById('museum-title')
   
@@ -449,171 +625,46 @@ function init() {
   camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z)
 
   scene = new THREE.Scene()
-  // Museum atmosphere background color
-  scene.background = new THREE.Color(0x1a2c42) // Using original CONFIG.COLORS.BACKGROUND
-  // Lighter fog for better visibility 
-  scene.fog = new THREE.Fog(0x1a2c42, 15, 30)
+  scene.background = new THREE.Color(CONFIG.COLORS.SKY)
+  scene.fog = new THREE.Fog(CONFIG.COLORS.FOG, 18, 42)
 
   const ambientLight = new THREE.AmbientLight(
     CONFIG.LIGHTING.AMBIENT.COLOR,
     CONFIG.LIGHTING.AMBIENT.INTENSITY
   )
   scene.add(ambientLight)
-  
-  // Add a few global spotlights to illuminate the paintings instead of individual lights
+
+  const sunLight = new THREE.DirectionalLight(
+    CONFIG.LIGHTING.SUN.COLOR,
+    CONFIG.LIGHTING.SUN.INTENSITY
+  )
+  sunLight.castShadow = true
+  sunLight.shadow.mapSize.set(1024, 1024)
+  sunLight.position.set(12, 18, 8)
+  scene.add(sunLight)
+
   const wallLights = [
     [
-      new THREE.Vector3(0, CONFIG.WALL_HEIGHT - 1, -CONFIG.ROOM_SIZE / 2),
+      new THREE.Vector3(0, CONFIG.WALL_HEIGHT - 0.9, -CONFIG.ROOM_SIZE / 2),
       new THREE.Vector3(0, CONFIG.PAINTING.ELEVATION, -CONFIG.ROOM_SIZE + 0.5)
     ],
     [
-      new THREE.Vector3(0, CONFIG.WALL_HEIGHT - 1, CONFIG.ROOM_SIZE / 2),
+      new THREE.Vector3(0, CONFIG.WALL_HEIGHT - 0.9, CONFIG.ROOM_SIZE / 2),
       new THREE.Vector3(0, CONFIG.PAINTING.ELEVATION, CONFIG.ROOM_SIZE - 0.5)
     ],
     [
-      new THREE.Vector3(CONFIG.ROOM_SIZE / 2, CONFIG.WALL_HEIGHT - 1, 0),
+      new THREE.Vector3(CONFIG.ROOM_SIZE / 2, CONFIG.WALL_HEIGHT - 0.9, 0),
       new THREE.Vector3(CONFIG.ROOM_SIZE - 0.5, CONFIG.PAINTING.ELEVATION, 0)
     ],
     [
-      new THREE.Vector3(-CONFIG.ROOM_SIZE / 2, CONFIG.WALL_HEIGHT - 1, 0),
+      new THREE.Vector3(-CONFIG.ROOM_SIZE / 2, CONFIG.WALL_HEIGHT - 0.9, 0),
       new THREE.Vector3(-CONFIG.ROOM_SIZE + 0.5, CONFIG.PAINTING.ELEVATION, 0)
     ]
   ]
   wallLights.forEach(([position, target]) => createWallSpotlight(position, target))
-
-  flashlight = new THREE.SpotLight(
-    CONFIG.LIGHTING.FLASHLIGHT.COLOR,
-    CONFIG.LIGHTING.FLASHLIGHT.INTENSITY
-  )
-  
-  // Set optional parameters if supported by the THREE.js version
-  if (flashlight.distance !== undefined) {
-    flashlight.distance = CONFIG.LIGHTING.FLASHLIGHT.DISTANCE
-  }
-  if (flashlight.angle !== undefined) {
-    flashlight.angle = CONFIG.LIGHTING.FLASHLIGHT.ANGLE
-  }
-  if (flashlight.penumbra !== undefined) {
-    flashlight.penumbra = CONFIG.LIGHTING.FLASHLIGHT.PENUMBRA
-  }
-  if (flashlight.decay !== undefined) {
-    flashlight.decay = CONFIG.LIGHTING.FLASHLIGHT.DECAY
-  }
-  
-  flashlight.castShadow = true
-  if (flashlight.shadow && flashlight.shadow.mapSize) {
-    flashlight.shadow.mapSize.set(1024, 1024)
-  }
-  if (flashlight.shadow && flashlight.shadow.bias !== undefined) {
-    flashlight.shadow.bias = -0.0001
-  }
-  flashlight.position.set(0, 0, 0)
-  flashlight.target.position.set(0, 0, -1)
-
-  const rimLight = new THREE.DirectionalLight(
-    CONFIG.LIGHTING.RIM.COLOR,
-    CONFIG.LIGHTING.RIM.INTENSITY
-  )
-  rimLight.castShadow = true
-  rimLight.shadow.mapSize.set(1024, 1024)
-  rimLight.position.set(1, 5, 1)
-  scene.add(rimLight)
-
-  const spotLight1 = new THREE.SpotLight(
-    CONFIG.LIGHTING.SPOT.COLOR,
-    CONFIG.LIGHTING.SPOT.INTENSITY
-  )
-  // Set optional parameters if supported
-  if (spotLight1.distance !== undefined) {
-    spotLight1.distance = CONFIG.LIGHTING.SPOT.DISTANCE
-  }
-  if (spotLight1.angle !== undefined) {
-    spotLight1.angle = CONFIG.LIGHTING.SPOT.ANGLE
-  }
-  if (spotLight1.penumbra !== undefined) {
-    spotLight1.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
-  }
-  
-  spotLight1.castShadow = true
-  if (spotLight1.shadow && spotLight1.shadow.mapSize) {
-    spotLight1.shadow.mapSize.set(1024, 1024)
-  }
-  spotLight1.position.set(
-    CONFIG.ROOM_SIZE / 2,
-    CONFIG.WALL_HEIGHT - 1,
-    -CONFIG.ROOM_SIZE / 2
-  )
-  scene.add(spotLight1)
-
-  const spotLight2 = new THREE.SpotLight(
-    CONFIG.LIGHTING.SPOT.COLOR,
-    CONFIG.LIGHTING.SPOT.INTENSITY
-  )
-  // Set optional parameters if supported
-  if (spotLight2.distance !== undefined) {
-    spotLight2.distance = CONFIG.LIGHTING.SPOT.DISTANCE
-  }
-  if (spotLight2.angle !== undefined) {
-    spotLight2.angle = CONFIG.LIGHTING.SPOT.ANGLE
-  }
-  if (spotLight2.penumbra !== undefined) {
-    spotLight2.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
-  }
-  
-  spotLight2.castShadow = true
-  if (spotLight2.shadow && spotLight2.shadow.mapSize) {
-    spotLight2.shadow.mapSize.set(1024, 1024)
-  }
-  spotLight2.position.set(
-    -CONFIG.ROOM_SIZE / 2,
-    CONFIG.WALL_HEIGHT - 1,
-    CONFIG.ROOM_SIZE / 2
-  )
-  scene.add(spotLight2)
-
-  camera.add(flashlight)
-  camera.add(flashlight.target)
   scene.add(camera)
 
-  const floorGeometry = new THREE.PlaneGeometry(
-    CONFIG.ROOM_SIZE * 2,
-    CONFIG.ROOM_SIZE * 2
-  )
-
-  // Simplify floor - just use a color instead of texture to reduce WebGL resources
-  const floorColor = 0x333333
-
-  // Create glossy floor material - simplified to just use color
-  const floorMaterial = new THREE.MeshStandardMaterial({
-    color: floorColor,
-    roughness: 0.05,  // Very low roughness for glossiness
-    metalness: 0.3
-  })
-  const floor = new THREE.Mesh(floorGeometry, floorMaterial)
-  floor.rotation.x = -Math.PI / 2
-  floor.position.y = 0
-  floor.receiveShadow = true
-  scene.add(floor)
-
-  // Create a more detailed ceiling with recessed panels - common in museums
-  const ceilingGeometry = new THREE.PlaneGeometry(
-    CONFIG.ROOM_SIZE * 2,
-    CONFIG.ROOM_SIZE * 2
-  )
-  
-  // Simplify ceiling - just use a color instead of texture
-  const ceilingMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.9,
-    metalness: 0.0
-  })
-  
-  const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial)
-  ceiling.rotation.x = Math.PI / 2
-  ceiling.position.y = CONFIG.WALL_HEIGHT
-  ceiling.receiveShadow = true
-  scene.add(ceiling)
-
+  createGround()
   createWalls()
 
   createPaintings()
@@ -623,10 +674,15 @@ function init() {
 
     const blocker = document.getElementById('blocker')
     const instructions = document.getElementById('instructions')
+    const enterWorld = document.getElementById('enter-world')
 
-    instructions.addEventListener('click', function () {
+    function lockControls(event) {
+      if (event) event.stopPropagation()
       controls.lock()
-    })
+    }
+
+    instructions.addEventListener('click', lockControls)
+    if (enterWorld) enterWorld.addEventListener('click', lockControls)
 
     controls.addEventListener('lock', function () {
       instructions.style.display = 'none'
@@ -663,9 +719,6 @@ function init() {
       case 'ArrowRight':
       case 'KeyD':
         moveRight = true
-        break
-      case 'KeyF':
-        flashlight.visible = !flashlight.visible
         break
       case 'Space':
         if (canJump) {
@@ -741,226 +794,240 @@ function init() {
 }
 
 function createWalls() {
-  // Simplified wall material - just use color instead of texture
-  const wallMaterial = new THREE.MeshStandardMaterial({
-    color: 0xf5f5f0, // Light off-white
-    roughness: 0.9,  // Matte finish
-    metalness: 0.0   // No metallic properties
+  const wallMaterial = createPixelMaterial(
+    'stone',
+    CONFIG.WORLD.WALL_REPEAT,
+    2
+  )
+
+  const wallSpecs = [
+    {
+      width: CONFIG.ROOM_SIZE * 2,
+      depth: CONFIG.WALL_THICKNESS,
+      x: 0,
+      z: -CONFIG.ROOM_SIZE
+    },
+    {
+      width: CONFIG.ROOM_SIZE * 2,
+      depth: CONFIG.WALL_THICKNESS,
+      x: 0,
+      z: CONFIG.ROOM_SIZE
+    },
+    {
+      width: CONFIG.WALL_THICKNESS,
+      depth: CONFIG.ROOM_SIZE * 2,
+      x: CONFIG.ROOM_SIZE,
+      z: 0
+    },
+    {
+      width: CONFIG.WALL_THICKNESS,
+      depth: CONFIG.ROOM_SIZE * 2,
+      x: -CONFIG.ROOM_SIZE,
+      z: 0
+    }
+  ]
+
+  wallSpecs.forEach(({ width, depth, x, z }) => {
+    addWallBlock(width, depth, x, z, wallMaterial)
   })
 
-  const northWallGeometry = new THREE.BoxGeometry(
-    CONFIG.ROOM_SIZE * 2,
-    CONFIG.WALL_HEIGHT,
-    0.1
-  )
-  const northWall = new THREE.Mesh(northWallGeometry, wallMaterial)
-  northWall.castShadow = true
-  northWall.receiveShadow = true
-  northWall.position.set(0, CONFIG.WALL_HEIGHT / 2, -CONFIG.ROOM_SIZE)
-  scene.add(northWall)
+  const trimMaterial = createPixelMaterial('smoothstone', 1, 1)
+  const pillarPositions = [
+    [CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, CONFIG.ROOM_SIZE],
+    [CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, -CONFIG.ROOM_SIZE],
+    [-CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, CONFIG.ROOM_SIZE],
+    [-CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, -CONFIG.ROOM_SIZE]
+  ]
 
-  const southWallGeometry = new THREE.BoxGeometry(
-    CONFIG.ROOM_SIZE * 2,
-    CONFIG.WALL_HEIGHT,
-    0.1
-  )
-  const southWall = new THREE.Mesh(southWallGeometry, wallMaterial)
-  southWall.castShadow = true
-  southWall.receiveShadow = true
-  southWall.position.set(0, CONFIG.WALL_HEIGHT / 2, CONFIG.ROOM_SIZE)
-  scene.add(southWall)
-
-  const eastWallGeometry = new THREE.BoxGeometry(
-    0.1,
-    CONFIG.WALL_HEIGHT,
-    CONFIG.ROOM_SIZE * 2
-  )
-  const eastWall = new THREE.Mesh(eastWallGeometry, wallMaterial)
-  eastWall.castShadow = true
-  eastWall.receiveShadow = true
-  eastWall.position.set(CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, 0)
-  scene.add(eastWall)
-
-  const westWallGeometry = new THREE.BoxGeometry(
-    0.1,
-    CONFIG.WALL_HEIGHT,
-    CONFIG.ROOM_SIZE * 2
-  )
-  const westWall = new THREE.Mesh(westWallGeometry, wallMaterial)
-  westWall.castShadow = true
-  westWall.receiveShadow = true
-  westWall.position.set(-CONFIG.ROOM_SIZE, CONFIG.WALL_HEIGHT / 2, 0)
-  scene.add(westWall)
-  
-  // Add baseboards along the walls (a common museum feature)
-  const baseboardMaterial = new THREE.MeshStandardMaterial({
-    color: 0x222222, // Dark color for baseboards
-    roughness: 0.5,
-    metalness: 0.2
+  pillarPositions.forEach(([x, y, z]) => {
+    const pillar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, CONFIG.WALL_HEIGHT + 1.2, 1.2),
+      trimMaterial
+    )
+    pillar.position.set(x, y + 0.6, z)
+    pillar.castShadow = true
+    pillar.receiveShadow = true
+    scene.add(pillar)
+    createTorch(new THREE.Vector3(x * 0.92, CONFIG.WALL_HEIGHT - 0.4, z * 0.92))
   })
-  
-  // North baseboard
-  const northBaseboardGeometry = new THREE.BoxGeometry(CONFIG.ROOM_SIZE * 2, 0.3, 0.12)
-  const northBaseboard = new THREE.Mesh(northBaseboardGeometry, baseboardMaterial)
-  northBaseboard.position.set(0, 0.15, -CONFIG.ROOM_SIZE + 0.06)
-  scene.add(northBaseboard)
-  
-  // South baseboard
-  const southBaseboardGeometry = new THREE.BoxGeometry(CONFIG.ROOM_SIZE * 2, 0.3, 0.12)
-  const southBaseboard = new THREE.Mesh(southBaseboardGeometry, baseboardMaterial)
-  southBaseboard.position.set(0, 0.15, CONFIG.ROOM_SIZE - 0.06)
-  scene.add(southBaseboard)
-  
-  // East baseboard
-  const eastBaseboardGeometry = new THREE.BoxGeometry(0.12, 0.3, CONFIG.ROOM_SIZE * 2)
-  const eastBaseboard = new THREE.Mesh(eastBaseboardGeometry, baseboardMaterial)
-  eastBaseboard.position.set(CONFIG.ROOM_SIZE - 0.06, 0.15, 0)
-  scene.add(eastBaseboard)
-  
-  // West baseboard
-  const westBaseboardGeometry = new THREE.BoxGeometry(0.12, 0.3, CONFIG.ROOM_SIZE * 2)
-  const westBaseboard = new THREE.Mesh(westBaseboardGeometry, baseboardMaterial)
-  westBaseboard.position.set(-CONFIG.ROOM_SIZE + 0.06, 0.15, 0)
-  scene.add(westBaseboard)
+}
+
+function createGround() {
+  const floorGeometry = new THREE.PlaneGeometry(
+    CONFIG.ROOM_SIZE * 2,
+    CONFIG.ROOM_SIZE * 2
+  )
+  const floor = new THREE.Mesh(
+    floorGeometry,
+    createPixelMaterial('smoothstone', 8, 8)
+  )
+  floor.rotation.x = -Math.PI / 2
+  floor.receiveShadow = true
+  scene.add(floor)
+}
+
+function addWallBlock(width, depth, x, z, material) {
+  const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(width, CONFIG.WALL_HEIGHT, depth),
+    material
+  )
+  wall.castShadow = true
+  wall.receiveShadow = true
+  wall.position.set(x, CONFIG.WALL_HEIGHT / 2, z)
+  scene.add(wall)
+}
+
+function maxPaintingsForSurface(length) {
+  let count = Math.floor(length / (CONFIG.PAINTING.WIDTH + CONFIG.PAINTING.MIN_SPACING))
+  while (count > 0) {
+    const spacing =
+      (length - CONFIG.PAINTING.WIDTH * count) / (count + 1)
+    if (spacing >= CONFIG.PAINTING.MIN_SPACING) return count
+    count--
+  }
+  return 0
+}
+
+function getSlotsForSurface(surface, count) {
+  const spacing =
+    (surface.length - CONFIG.PAINTING.WIDTH * count) / (count + 1)
+  const firstCenter =
+    surface.start + spacing + CONFIG.PAINTING.WIDTH / 2
+
+  const slots = []
+  for (let i = 0; i < count; i++) {
+    const position = firstCenter + i * (CONFIG.PAINTING.WIDTH + spacing)
+    if (surface.axis === 'x') {
+      slots.push({ x: position, z: surface.fixed, rotation: surface.rotation })
+    } else {
+      slots.push({ x: surface.fixed, z: position, rotation: surface.rotation })
+    }
+  }
+  return slots
+}
+
+function placePaintingsOnSurfaces(items, surfaces, isResume) {
+  const remaining = [...items]
+
+  surfaces.forEach((surface) => {
+    if (remaining.length === 0) return
+
+    const capacity = surface.capacity ?? maxPaintingsForSurface(surface.length)
+    const count = Math.min(capacity, remaining.length)
+    if (count <= 0) return
+
+    const slots = getSlotsForSurface(surface, count)
+    slots.forEach((slot) => {
+      const item = remaining.shift()
+      createPainting(
+        item,
+        slot.x,
+        CONFIG.PAINTING.ELEVATION,
+        slot.z,
+        slot.rotation,
+        isResume
+      )
+    })
+  })
+}
+
+function createTorch(position) {
+  const torchBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.8, 0.22),
+    createPixelMaterial('log', 1, 1)
+  )
+  torchBase.position.copy(position)
+  scene.add(torchBase)
+
+  const ember = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35, 0.35, 0.35),
+    createPixelMaterial('glow', 1, 1, {
+      emissive: 0xffc456,
+      emissiveIntensity: 0.55
+    })
+  )
+  ember.position.set(position.x, position.y + 0.52, position.z)
+  scene.add(ember)
+
+  const torchLight = new THREE.PointLight(
+    CONFIG.LIGHTING.TORCH.COLOR,
+    CONFIG.LIGHTING.TORCH.INTENSITY,
+    CONFIG.LIGHTING.TORCH.DISTANCE
+  )
+  torchLight.position.set(position.x, position.y + 0.7, position.z)
+  scene.add(torchLight)
 }
 
 function createPaintings() {
-  const wallCount = 4
-  const wallLength = CONFIG.ROOM_SIZE * 2
-  const paintingWidth = CONFIG.PAINTING.WIDTH
   const wallOffset = CONFIG.PAINTING.WALL_OFFSET
-  const availableLength = wallLength
-
-  // Adjust repository list so each wall has the same number of paintings
-  // and spacing meets the minimum requirement
-  let layoutAdjusted = false
-  const maxIterations = 100 // Safety limit to prevent infinite loops
-  let iterations = 0
-  
-  while (!layoutAdjusted && iterations < maxIterations) {
-    iterations++
-    const totalPaintings = isCustomUser ? 
-      repositories.length :
-      resumeSections.length + repositories.length + (spotifyTrack ? 1 : 0)
-
-    if (totalPaintings % wallCount !== 0) {
-      const removeCount = totalPaintings % wallCount
-      repositories.splice(-removeCount)
-      continue
-    }
-
-    const perWall = totalPaintings / wallCount
-    const spacing =
-      (availableLength - paintingWidth * perWall) / (perWall + 1)
-
-    if (spacing < CONFIG.PAINTING.MIN_SPACING && repositories.length > 0) {
-      repositories.pop()
-      continue
-    }
-
-    layoutAdjusted = true
-  }
-
-  // Only include resume sections and Spotify for default user
-  const basePaintings = isCustomUser ? [...repositories] : [...resumeSections, ...repositories]
-  let allPaintings = [...basePaintings]
-  const paintingsPerWall =
-    (basePaintings.length + (!isCustomUser && spotifyTrack ? 1 : 0)) / wallCount
-
-  if (!isCustomUser && spotifyTrack) {
-    const centerIndex = Math.floor(paintingsPerWall / 2)
-    allPaintings.splice(centerIndex, 0, {
-      isSpotify: true,
-      spotifyData: spotifyTrack
-    })
-  }
+  const resumePaintings = isCustomUser ? [] : [...resumeSections]
+  const projectPaintings = [...repositories]
+  const fullWallStart = -13
+  const fullWallLength = 26
 
   if (!isCustomUser) {
-    const summaryIndex = allPaintings.findIndex(
-      p => p.isResume && p.title === 'Summary'
+    const summaryIndex = resumePaintings.findIndex(
+      painting => painting.title === 'Summary'
     )
-    if (summaryIndex !== -1) {
-      const [summaryItem] = allPaintings.splice(summaryIndex, 1)
-      const centerIndex = Math.floor(paintingsPerWall / 2)
-      allPaintings.splice(centerIndex, 0, summaryItem)
+    if (summaryIndex > 0) {
+      const [summary] = resumePaintings.splice(summaryIndex, 1)
+      resumePaintings.unshift(summary)
     }
   }
 
-  const spaceBetween =
-    (availableLength - paintingWidth * paintingsPerWall) /
-    (paintingsPerWall + 1)
-
-  const firstCenter =
-    -CONFIG.ROOM_SIZE + spaceBetween + paintingWidth / 2
-
-  let index = 0
-
-  for (let wallIndex = 0; wallIndex < wallCount; wallIndex++) {
-    for (let i = 0; i < paintingsPerWall; i++) {
-      const painting = allPaintings[index++]
-      const pos = firstCenter + i * (paintingWidth + spaceBetween)
-
-      let x, z, rotation
-
-      switch (wallIndex) {
-      case 0:
-        x = pos
-        z = -CONFIG.ROOM_SIZE + wallOffset
-        rotation = 0
-        break
-      case 1:
-        x = CONFIG.ROOM_SIZE - wallOffset
-        z = pos
-        rotation = -Math.PI / 2
-        break
-      case 2:
-        x = pos
-        z = CONFIG.ROOM_SIZE - wallOffset
-        rotation = Math.PI
-        break
-      case 3:
-        x = -CONFIG.ROOM_SIZE + wallOffset
-        z = pos
-        rotation = Math.PI / 2
-        break
-      }
-
-      if (painting.isSpotify) {
-        createPainting(
-          painting.spotifyData,
-          x,
-          CONFIG.PAINTING.ELEVATION,
-          z,
-          rotation,
-          true
-        )
-      } else if (painting.isResume) {
-        createPainting(
-          painting,
-          x,
-          CONFIG.PAINTING.ELEVATION,
-          z,
-          rotation,
-          false,
-          true
-        )
-      } else {
-        createPainting(
-          painting,
-          x,
-          CONFIG.PAINTING.ELEVATION,
-          z,
-          rotation
-        )
-      }
+  const resumeSurfaces = [
+    {
+      axis: 'x',
+      fixed: CONFIG.ROOM_SIZE - wallOffset,
+      start: fullWallStart,
+      length: fullWallLength,
+      rotation: Math.PI,
+      capacity: 3
+    },
+    {
+      axis: 'z',
+      fixed: -CONFIG.ROOM_SIZE + wallOffset,
+      start: fullWallStart,
+      length: fullWallLength,
+      rotation: Math.PI / 2,
+      capacity: 3
     }
+  ]
+
+  const projectSurfaces = [
+    {
+      axis: 'x',
+      fixed: -CONFIG.ROOM_SIZE + wallOffset,
+      start: fullWallStart,
+      length: fullWallLength,
+      rotation: 0,
+      capacity: 6
+    },
+    {
+      axis: 'z',
+      fixed: CONFIG.ROOM_SIZE - wallOffset,
+      start: fullWallStart,
+      length: fullWallLength,
+      rotation: -Math.PI / 2,
+      capacity: 6
+    }
+  ]
+
+  if (!isCustomUser) {
+    placePaintingsOnSurfaces(resumePaintings, resumeSurfaces, true)
   }
+  placePaintingsOnSurfaces(
+    projectPaintings,
+    isCustomUser
+      ? projectSurfaces.concat(resumeSurfaces)
+      : projectSurfaces,
+    false
+  )
 }
-function createPainting(data, x, y, z, rotation, isSpotify = false, isResume = false) {
+
+function createPainting(data, x, y, z, rotation, isResume = false) {
   let painting
-  if (isSpotify) {
-    painting = new SpotifyPainting(data, x, y, z, rotation)
-  } else if (isResume) {
+  if (isResume) {
     painting = new ResumePainting(data, x, y, z, rotation)
   } else {
     painting = new RepoPainting(data, x, y, z, rotation)
@@ -969,44 +1036,24 @@ function createPainting(data, x, y, z, rotation, isSpotify = false, isResume = f
 }
 
 function createWallSpotlight(position, target) {
-  const light = new THREE.SpotLight(0xffffff, 1.0)
+  const light = new THREE.SpotLight(
+    CONFIG.LIGHTING.SPOT.COLOR,
+    CONFIG.LIGHTING.SPOT.INTENSITY
+  )
+  if (light.distance !== undefined) {
+    light.distance = CONFIG.LIGHTING.SPOT.DISTANCE
+  }
+  if (light.angle !== undefined) {
+    light.angle = CONFIG.LIGHTING.SPOT.ANGLE
+  }
+  if (light.penumbra !== undefined) {
+    light.penumbra = CONFIG.LIGHTING.SPOT.PENUMBRA
+  }
+  light.castShadow = true
   light.position.copy(position)
   light.target.position.copy(target)
   scene.add(light)
   scene.add(light.target)
-}
-
-
-
-function wrapText(context, text, x, y, maxWidth, lineHeight) {
-  const words = text.split(' ')
-  let line = ''
-  let lines = 0
-  const maxLines = 5
-
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' '
-    const metrics = context.measureText(testLine)
-    const testWidth = metrics.width
-
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y)
-      line = words[n] + ' '
-      y += lineHeight
-      lines++
-
-      if (lines >= maxLines) {
-        if (n < words.length - 1) {
-          context.fillText(line + '...', x, y)
-          return
-        }
-      }
-    } else {
-      line = testLine
-    }
-  }
-
-  context.fillText(line, x, y)
 }
 
 function wrapTextLines(context, text, maxWidth, lineHeight, maxLines) {
@@ -1276,44 +1323,46 @@ function animate() {
 
   if (!isMobile) {
     if (controls && controls.isLocked === true) {
+      const player = controls.getObject()
+
       controls.moveRight(-velocity.x * delta)
       controls.moveForward(-velocity.z * delta)
-      controls.getObject().position.y += verticalVelocity * delta
+      player.position.y += verticalVelocity * delta
 
-      if (controls.getObject().position.y < CONFIG.MOVEMENT.GROUND_LEVEL) {
-        controls.getObject().position.y = CONFIG.MOVEMENT.GROUND_LEVEL
+      if (player.position.y < CONFIG.MOVEMENT.GROUND_LEVEL) {
+        player.position.y = CONFIG.MOVEMENT.GROUND_LEVEL
         verticalVelocity = 0
         canJump = true
       }
 
       if (
-        controls.getObject().position.x <
+        player.position.x <
         -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.x =
+        player.position.x =
           -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
       if (
-        controls.getObject().position.x >
+        player.position.x >
         CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.x =
+        player.position.x =
           CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
       if (
-        controls.getObject().position.z <
+        player.position.z <
         -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.z =
+        player.position.z =
           -CONFIG.ROOM_SIZE + CONFIG.MOVEMENT.BOUNDARY_OFFSET
       if (
-        controls.getObject().position.z >
+        player.position.z >
         CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
       )
-        controls.getObject().position.z =
+        player.position.z =
           CONFIG.ROOM_SIZE - CONFIG.MOVEMENT.BOUNDARY_OFFSET
 
-      cameraPos.x = controls.getObject().position.x
-      cameraPos.y = controls.getObject().position.y
-      cameraPos.z = controls.getObject().position.z
+      cameraPos.x = player.position.x
+      cameraPos.y = player.position.y
+      cameraPos.z = player.position.z
     }
   } else {
     const forward = new THREE.Vector3(

@@ -3,22 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="page-title">David Yen's Personal Museum</title>
+    <title id="page-title">David Yen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="css/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/PointerLockControls.js"></script>
   </head>
   <body>
-    <div id="loading">Welcome to my personal museum...</div>
+    <div id="loading">
+      <div class="panel pixel-panel">
+        <p class="panel-kicker">Loading world seed</p>
+        <h2>Generating David's Portfolio Realm...</h2>
+      </div>
+    </div>
     <div id="blocker">
-      <div id="instructions">
-        <h1 id="museum-title">David Yen's Personal Museum</h1>
-        <p>Move: WASD / Arrow Keys</p>
-        <p>Jump: Space Bar</p>
-        <p>Look: Mouse</p>
-        <p>Flashlight: F</p>
-        <p>Click paintings to interact</p>
-        <p>Click to start</p>
+      <div id="instructions" class="panel pixel-panel">
+        <p class="panel-kicker">Adventure Mode</p>
+        <h1 id="museum-title">David Yen</h1>
+        <p>Traverse a voxel gallery built from resume highlights and recent work.</p>
+        <div class="instructions-grid">
+          <p><span class="keycap">WASD</span> Walk the map</p>
+          <p><span class="keycap">Mouse</span> Look around</p>
+          <p><span class="keycap">Space</span> Jump</p>
+          <p><span class="keycap">Click</span> Open links</p>
+        </div>
+        <button id="enter-world" type="button">Enter World</button>
       </div>
     </div>
 
