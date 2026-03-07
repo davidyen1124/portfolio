@@ -10,7 +10,8 @@
     "no-trailing-whitespace": "error",
     "attribute-boolean-style": "error",
     "doctype-style": "error",
-    "no-duplicate-id": "error",
+    "no-dup-id": "error",
+    "valid-id": "error",
     "prefer-button": "error"
   }
 }
