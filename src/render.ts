@@ -61,7 +61,8 @@ function companyTag(c: Company, i: number) {
 
 export function renderCompanies() {
   const root = $('#companies')
-  root.innerHTML = COMPANIES.map(companyTag).join('')
+  // newest first, like a résumé (and LinkedIn): the current job is the first thing after the hero
+  root.innerHTML = [...COMPANIES].sort((a, b) => b.year - a.year).map(companyTag).join('')
   for (const h of root.querySelectorAll<HTMLElement>('.co__name .line__in')) charify(h)
 }
 

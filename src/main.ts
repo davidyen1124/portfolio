@@ -90,9 +90,10 @@ function syncHud() {
     current = top
     onScene(top)
   }
-  const rewinding = top.id === 'rewind'
-  hud.classList.toggle('is-rewinding', rewinding && state.rewindYear > 2012 && state.rewindYear < 2026)
-  hudYear.textContent = rewinding ? String(state.rewindYear) : top.dataset.year ?? ''
+  const tape = top.id === 'rewind'
+  hud.classList.toggle('is-rewinding', tape && state.tapeYear > 2012 && state.tapeYear < 2026)
+  hudYear.textContent = tape ? String(state.tapeYear) : top.dataset.year ?? ''
+  hud.classList.toggle('is-solid', top.id === 'contact' && top.getBoundingClientRect().top < -2)
 }
 
 /* ——— scroll scenes ——— */

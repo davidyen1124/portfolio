@@ -14,7 +14,7 @@ const CHIPS = ['Is David any good?', 'Why should I hire him?', 'Tech stack?', 'T
 
 // first match wins, so the specific ones go first
 const RULES: [RegExp, string | string[]][] = [
-  [/why.*hire|convince|pitch|sell me/i, 'Nine-plus years across SaaS, marketplaces, ad-tech and social. Makes slow things fast and big things feel small. Also, he built me, and I turned out… fine.'],
+  [/why.*hire|convince|pitch|sell me/i, 'Eleven-plus years across SaaS, marketplaces, ad-tech and social. Makes slow things fast and big things feel small. Also, he built me, and I turned out… fine.'],
   [/hire|job|role|position|available|opening|recruit|contract|interview/i, `Excellent instinct. Email ${MAIL}. I’d forward it myself, but I don’t have hands. Or email.`],
   [/\b(sentient|alive|conscious|feelings?|human|ai|agi|robot)\b/i, 'No. Next question. (Please don’t tell David I hesitated.)'],
   [/salary|money|pay|rate|comp|equity|\$/i, 'I’m not authorized to discuss money. I’m barely authorized to discuss this.'],

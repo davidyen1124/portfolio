@@ -61,8 +61,11 @@ html.lenis body {
 .lenis.lenis-smooth {
   scroll-behavior: auto !important;
 }
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
+/* keep wheel scrolling inside the chat on desktop; on touch, iOS must be free to hand the swipe to the page */
+@media (pointer: fine) {
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
 }
 .lenis.lenis-stopped {
   overflow: hidden;
@@ -155,6 +158,20 @@ mark {
 .hud a,
 .hud button {
   pointer-events: auto;
+}
+/* the contact screen scrolls normally, so its copy passes under the HUD: give the HUD a floor */
+.hud::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hud-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--hud-ink) 12%, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.hud.is-solid::before {
+  opacity: 1;
 }
 .hud__logo {
   justify-self: start;
@@ -1239,7 +1256,7 @@ mark {
   background: var(--cream);
   color: var(--ink);
   border: 2px solid var(--ink);
-  box-shadow: 8px 8px 0 var(--ink);
+  box-shadow: 0 24px 50px -18px rgb(0 0 0 / 0.45);
   font-size: 14.5px;
   line-height: 1.4;
 }
@@ -1410,7 +1427,7 @@ mark {
   border: 2px solid var(--ink);
   font-size: 14px;
   line-height: 1.35;
-  box-shadow: 5px 5px 0 var(--ink);
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.4);
 }
 .bot {
   position: fixed;
@@ -1427,7 +1444,7 @@ mark {
   background: var(--cream);
   color: var(--ink);
   border: 2px solid var(--ink);
-  box-shadow: 10px 10px 0 var(--ink);
+  box-shadow: 0 30px 70px -24px rgb(0 0 0 / 0.5);
 }
 .bot__head {
   display: flex;
@@ -1851,12 +1868,14 @@ mark {
     right: 12px;
     bottom: 76px;
   }
+  /* a bottom sheet, not a takeover: the page stays visible (and swipeable) above it */
   .bot {
     right: 8px;
     left: 8px;
     bottom: 8px;
     width: auto;
-    height: min(620px, calc(100svh - 76px));
+    height: min(540px, 68vh);
+    height: min(540px, 68svh);
   }
 }
 @media (max-height: 560px) and (min-width: 761px) {

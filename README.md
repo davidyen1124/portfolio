@@ -4,7 +4,7 @@
 
 **Live: [davidyen1124.github.io/portfolio](https://davidyen1124.github.io/portfolio/)**
 
-A scroll-driven portfolio. One screen per company, each in that company's colours, stacked like posters: every screen slides up over the last one while a year counter in the header ticks from 2012 to now.
+A scroll-driven portfolio. One screen per company, newest first, each in that company's colours and stacked like posters: every screen slides up over the last one while the year in the header counts back to 2012. Then a VHS fast-forward brings you back to now for the side projects.
 
 The old version was a walk-around 3D museum. It is in the git history, where it can think about what it did.
 
@@ -13,14 +13,14 @@ The old version was a walk-around 3D museum. It is in the git history, where it 
 | Screen | Palette | Toys |
 |---|---|---|
 | Hero: who is this | cream, ink, tomato | laptop, bubble tea, keycap, a rubber duck with opinions |
-| Rewind: 2026 → 2012 | VHS black | tracking lines, a timecode that spins backwards |
-| Sparks Lab (2012) | Android green | phone, trophy, guzheng, lightning |
-| Dcard (2013) | Dcard blues | profile card, push bell, midnight clock, paper plane |
-| CHOCOLABS (2014) | chocolate + candy pink | chocolate bar, chocolate vinyl, headphones, test tube |
-| Yahoo (2017) | Yahoo purple | exclamation mark, bar chart, hourglass, anomaly under a magnifier |
-| Houzz (2021) | Houzz green on linen | sofa, arc lamp, monstera, tiny house |
-| Typeface (2023–2025) | Typeface red + black | cursor, a box in a C-clamp (the bundle), canvas, rosette |
 | Zoom (2025–now) | Zoom blue on midnight navy | a webcam with its shutter half-closed, a wall of camera-off tiles, a muted mic, a sealed folder. The name starts under a CLASSIFIED bar and gets declassified as you scroll; the redactions reveal nothing useful on hover |
+| Typeface (2023–2025) | Typeface red + black | cursor, a box in a C-clamp (the bundle), canvas, rosette |
+| Houzz (2021) | Houzz green on linen | sofa, arc lamp, monstera, tiny house |
+| Yahoo (2017) | Yahoo purple | exclamation mark, bar chart, hourglass, anomaly under a magnifier |
+| CHOCOLABS (2014) | chocolate + candy pink | chocolate bar, chocolate vinyl, headphones, test tube |
+| Dcard (2013) | Dcard blues | profile card, push bell, midnight clock, paper plane |
+| Sparks Lab (2012) | Android green | phone, trophy, guzheng, lightning |
+| Fast-forward: 2012 → 2026 | VHS black | tracking lines, a timecode that spins forward back to now |
 | Side projects | black | a horizontal track of cards, star counts fetched live from GitHub |
 | The end | cream | contact, awards, education |
 

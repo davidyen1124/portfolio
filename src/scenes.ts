@@ -14,8 +14,8 @@ const short = matchMedia('(max-height: 500px) and (orientation: landscape)')
 const narrow = () => stacked.matches || short.matches
 const motion = !reduced
 
-/** Shared by the HUD while the tape rewinds. */
-export const state = { rewindYear: 2026 }
+/** Shared by the HUD while the tape fast-forwards. */
+export const state = { tapeYear: 2012 }
 
 /*
  Every scene after the hero is `margin-top: -100vh`, so it slides up over the previous
@@ -115,7 +115,7 @@ export function heroScene() {
   covered(tl, stage, 0)
 }
 
-/* ——— rewind ——— */
+/* ——— fast-forward: after the oldest job, the tape runs back up to now ——— */
 
 export function rewindScene() {
   const section = $('.rewind')
@@ -125,18 +125,18 @@ export function rewindScene() {
   const yearBox = year.parentElement!
   const tl = sceneTimeline(section)
   enter(tl, stage)
-  const counter = { v: 2026 }
-  let shown = 2026
+  const counter = { v: 2012 }
+  let shown = 2012
   tl.to(
     counter,
     {
-      v: 2012,
+      v: 2026,
       duration: 1.15,
       ease: 'power1.inOut',
       onUpdate: () => {
         const y = Math.round(counter.v)
-        state.rewindYear = y
-        // timecode spins backwards with the tape
+        state.tapeYear = y
+        // timecode spins forward with the tape
         const secs = Math.max(0, Math.round((counter.v - 2012) * 3600 * 0.37))
         tc.textContent = `SP ${String(Math.floor(secs / 3600)).padStart(2, '0')}:${String(Math.floor(secs / 60) % 60).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`
         if (y !== shown) {
