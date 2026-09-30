@@ -69,6 +69,20 @@ for (const [name, ctxOpts] of [
     await shot('5-dnd')
   }
 
+  // Zoom: the name is declassified once settled, redactions reveal on hover/tap, the notification is still redacted
+  await page.evaluate(() => window.scrollTo(0, document.getElementById('zoom').offsetTop + innerHeight * 0.6))
+  await page.waitForTimeout(2600)
+  const barScale = await page.evaluate(() => getComputedStyle(document.querySelector('#zoom .redact-bar')).transform)
+  check(/matrix\(0,/.test(barScale) || barScale.startsWith('matrix(0'), `zoom name declassified once settled (${barScale})`)
+  const redact = page.locator('#zoom .co__line .redact')
+  const before = await redact.evaluate((el) => getComputedStyle(el).backgroundColor)
+  if (ctxOpts.hasTouch) await redact.tap()
+  else await redact.hover()
+  await page.waitForTimeout(400)
+  const after = await redact.evaluate((el) => getComputedStyle(el).backgroundColor)
+  check(before !== after && /0\)$|transparent/.test(after), `redaction reveals on ${ctxOpts.hasTouch ? 'tap' : 'hover'} (${before} → ${after})`)
+  await shot('5b-zoom-reveal')
+
   // bot
   await page.waitForTimeout(4500)
   await page.click('.bot-launch')
@@ -88,6 +102,11 @@ for (const [name, ctxOpts] of [
   check(log.some((l) => l.includes('65%')), 'bot answers "any good" with the 65% fact')
   check(log.some((l) => l.includes('not authorized to discuss money')), 'bot dodges salary')
   check(log.some((l) => l.includes('typed a whole paragraph')), 'third question gets the awkward deleted-paragraph bit')
+  await page.fill('.bot__form input', 'where does he work now?')
+  await page.press('.bot__form input', 'Enter')
+  await page.waitForFunction(() => document.querySelectorAll('.msg--bot:not(:has(.typing))').length >= 6, null, { timeout: 12000 })
+  const last = (await page.locator('.msg--bot').allTextContents()).pop()
+  check(last.includes('Zoom') && !last.includes('Typeface'), `bot says he works at Zoom now ("${last.slice(0, 40)}")`)
   await shot('6-bot')
   await page.keyboard.press('Escape')
   await page.waitForTimeout(600)

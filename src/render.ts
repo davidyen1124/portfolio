@@ -41,15 +41,15 @@ function companyTag(c: Company, i: number) {
   const style = `--bg:${t.bg};--ink:${t.ink};--accent:${t.accent};--soft:${t.soft};--name:${t.name ?? t.accent}`
   const tapeWords = [...c.tape, ...c.tape].map((w) => `<span>${w}</span>`).join('')
   return `
-  <section class="scene co co--${c.id}" id="${c.id}" data-theme="${c.id}" data-year="${c.year}" data-where="${c.where}" style="${style}">
+  <section class="scene co co--${c.id}${c.mystery ? ' is-mystery' : ''}" id="${c.id}" data-theme="${c.id}" data-year="${c.year}" data-where="${c.where}" style="${style}">
     <div class="stage">
       <div class="pattern pattern--${c.pattern}" aria-hidden="true"></div>
       <div class="props" aria-hidden="true">${c.props.map(propTag).join('')}</div>
       <div class="co__copy safe">
-        <p class="co__meta eyebrow"><span class="co__idx">${String(i + 1).padStart(2, '0')} / ${String(COMPANIES.length).padStart(2, '0')}</span><span>${c.when}</span><span>${c.where}</span><span class="co__role">${c.role}</span></p>
+        <p class="co__meta eyebrow"><span class="co__idx">${String(i + 1).padStart(2, '0')} / ${String(COMPANIES.length).padStart(2, '0')}</span><span>${c.when}</span><span>${c.where}</span><span class="co__role">${c.role}</span>${c.mystery ? '<span class="co__rec">● REC</span>' : ''}</p>
         <h2 class="co__name${lines.length > 1 ? ' is-two' : ''}" style="--len:${Math.max(...lines.map((l) => l.replace(/<[^>]+>/g, '').length))}" aria-label="${c.name}">${lines
           .map((l) => `<span class="line" aria-hidden="true"><span class="line__in">${l}</span></span>`)
-          .join('')}</h2>
+          .join('')}${c.mystery ? '<span class="redact-bar" aria-hidden="true"><i>Classified</i></span>' : ''}</h2>
         <p class="co__line">${c.line}</p>
         <ul class="co__stats${c.stats.length === 4 ? ' is-four' : ''}" style="--n:${c.stats.length}">${c.stats.map(statTag).join('')}</ul>
         ${c.foot ? `<p class="co__foot">${c.foot}</p>` : ''}

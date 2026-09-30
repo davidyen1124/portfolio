@@ -9,7 +9,7 @@ import Lenis from 'lenis'
 import { COMPANIES, END_NOTIF, HERO_NOTIF, LOADER_LINES, PROJECTS_NOTIF, type Notif } from './content'
 import { $, $$, QA, charify, reduced, session, wait } from './lib'
 import { refreshStars, renderCompanies, renderHero, renderProjects } from './render'
-import { companyScene, endScene, heroIntro, heroScene, measureBands, mouseParallax, projectsScene, rewindScene, state } from './scenes'
+import { companyScene, endScene, heroIntro, heroScene, measureBands, mouseParallax, projectsScene, rewindScene, spotlight, state } from './scenes'
 import { initBot } from './ui/bot'
 import { cookieBanner } from './ui/cookies'
 import { initNotifs, notify } from './ui/notify'
@@ -105,6 +105,7 @@ for (const s of $$('.co')) companyScene(s)
 projectsScene()
 endScene()
 mouseParallax(() => current)
+spotlight(() => current)
 
 gsap.to('.progress i', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } })
 ScrollTrigger.create({ start: 0, end: 'max', onUpdate: syncHud, onRefresh: syncHud })

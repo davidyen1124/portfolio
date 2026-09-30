@@ -4,7 +4,7 @@ A scroll-driven portfolio: TypeScript + Vite + GSAP ScrollTrigger + Lenis, deplo
 
 ## Layout of the code
 
-- `src/content.ts`: every word, number, colour and toy position. Facts must match `public/resume.pdf`. Jokes are welcome, but only when they are obviously jokes.
+- `src/content.ts`: every word, number, colour and toy position. Facts must match `public/resume.pdf`, except Zoom (2025–now), which David added directly and wants kept mysterious: Zoom's Meeting SDK and Video SDK for the web, nothing more. Describe the products only the way Zoom's own docs do (developers.zoom.us), and never invent what David built. Jokes are welcome, but only when they are obviously jokes.
 - `src/render.ts`: builds the company screens, hero toys and project cards from the content.
 - `src/scenes.ts`: all scroll choreography. Each scene after the hero has `margin-top: -100vh` and a sticky `.stage`, so it slides over the previous one. A scene's timeline spans three screens: entering, alone, covered.
 - `src/ui/`: the fake notifications, cookie banner and DavidBot.

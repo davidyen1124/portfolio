@@ -19,7 +19,8 @@ The old version was a walk-around 3D museum. It is in the git history, where it 
 | CHOCOLABS (2014) | chocolate + candy pink | chocolate bar, chocolate vinyl, headphones, test tube |
 | Yahoo (2017) | Yahoo purple | exclamation mark, bar chart, hourglass, anomaly under a magnifier |
 | Houzz (2021) | Houzz green on linen | sofa, arc lamp, monstera, tiny house |
-| Typeface (2023–now) | Typeface red + black | cursor, a box in a C-clamp (the bundle), canvas, rosette |
+| Typeface (2023–2025) | Typeface red + black | cursor, a box in a C-clamp (the bundle), canvas, rosette |
+| Zoom (2025–now) | Zoom blue on midnight navy | a webcam with its shutter half-closed, a wall of camera-off tiles, a muted mic, a sealed folder. The name starts under a CLASSIFIED bar and gets declassified as you scroll; the redactions reveal nothing useful on hover |
 | Side projects | black | a horizontal track of cards, star counts fetched live from GitHub |
 | The end | cream | contact, awards, education |
 
@@ -43,7 +44,7 @@ Pushing to `main` deploys to GitHub Pages via [`.github/workflows/deploy.yml`](.
 
 ## The art
 
-Every illustration was generated with **Codex CLI**'s built-in `image_gen` tool: 40 isolated "designer vinyl toy" renders on transparent backgrounds, so they can float as parallax layers over any brand colour. The briefs and the shared style prompt are in [`art/manifest.mjs`](art/manifest.mjs).
+Every illustration was generated with **Codex CLI**'s built-in `image_gen` tool: 44 isolated "designer vinyl toy" renders on transparent backgrounds, so they can float as parallax layers over any brand colour. The briefs and the shared style prompt are in [`art/manifest.mjs`](art/manifest.mjs).
 
 ```bash
 npm run art:gen -- hero-duck     # one codex exec per image → art/raw/<name>.png (git-ignored)

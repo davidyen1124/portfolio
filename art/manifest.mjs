@@ -15,6 +15,7 @@ const DCARD = pal('Dcard sky blue #3397CF, deep blue #006AA6, navy #00324E, clea
 const CHOCO = pal('dark chocolate #3B2016, milk chocolate #7B4A2D, candy pink #FF8FB1, cream #FFF1E0')
 const YAHOO = pal('Yahoo purple #6001D2, bright violet #7E1FFF, lilac #C8A8FF, white, a tiny touch of hot magenta #FF0080')
 const HOUZZ = pal('Houzz green #4DBC15, charcoal #222222, warm linen #F8F6F2, oatmeal #CEC7B5, natural oak wood, terracotta')
+const ZOOM = pal('Zoom blue #0B5CFF, deep navy #00053D, near-black navy #00031F, pale ice blue #D1DEF2, white, one tiny touch of recording red #FF3B4E') + ' LIGHTING for this set only: moodier and a little mysterious, low-key light with a cool Zoom-blue rim light and deeper soft shadows on the object itself (still no cast shadow, still transparent background).'
 const TF = pal('Typeface red #FD243E, near-black #111013, off-white #F1F1F2, cool grey #C5C4C6, small accents of cobalt #3D5AFE')
 
 export const ASSETS = [
@@ -59,6 +60,12 @@ export const ASSETS = [
   { name: 'tf-clamp', size: SQ, prompt: `A cardboard shipping box being squeezed comically thin inside a big red C-clamp, the box bulging and wrinkling, a few little packing peanuts popping out. Blank box, no printing or labels. ${TF}` },
   { name: 'tf-canvas', size: SQ, prompt: `A floating, tilted off-white design artboard panel (like an infinite canvas tile) with a tidy abstract layout of rounded rectangles and circles in red, cobalt and grey (no text), a couple of loose layout tiles drifting off its edge, and a small black mouse pointer hovering over it. ${TF}` },
   { name: 'tf-rosette', size: SQ, prompt: `A first-place award rosette ribbon: a pleated red fan circle around a blank off-white centre button, two long red and black ribbon tails. No text. ${TF}` },
+
+  // ——— Zoom, 2025–now: meetings, video, Web SDK. Details: classified. ———
+  { name: 'zoom-camera', size: SQ, prompt: `A chunky round webcam on a small clip stand, one big glossy dark lens, a sliding privacy shutter pulled halfway across the lens as if it is hiding something, a tiny red recording light glowing on the front. Slightly tilted, curious and secretive. ${ZOOM}` },
+  { name: 'zoom-tiles', size: SQ, prompt: `A floating, tilted panel holding a neat 3 by 3 grid of rounded video-call tiles, like a tiny wall of screens. Most tiles are dark navy with a simple blank round avatar silhouette (camera off); one tile glows bright Zoom blue and is empty; one tile has a thin glowing blue border. No text, no names, no icons, no UI labels. ${ZOOM}` },
+  { name: 'zoom-mic', size: SQ, prompt: `A chunky studio microphone on a short stand with one bold glossy diagonal slash bar crossing in front of it (the universal "muted" symbol) in recording red. The microphone itself is navy and Zoom blue. No text. ${ZOOM}` },
+  { name: 'zoom-folder', size: SQ, prompt: `A closed document folder in deep navy, tied shut with a thin string and sealed with a round glossy Zoom-blue wax seal, one thick black redaction bar across the front cover. Completely blank: no text, no stamps, no letters. ${ZOOM}` },
 
   // ——— Side projects ———
   { name: 'p-jiaobei', size: SQ, prompt: `A pair of red crescent-moon-shaped Taiwanese temple divination blocks (jiaobei / poe), polished lacquered red wood, one lying flat-side-up and one curved-side-up, as if they just landed after being tossed. Soft warm light.` },

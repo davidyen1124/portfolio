@@ -48,7 +48,9 @@ export interface Company {
   where: string
   year: number
   theme: Theme
-  pattern: 'dots' | 'grid' | 'stripes' | 'checker' | 'rings' | 'lines'
+  pattern: 'dots' | 'grid' | 'stripes' | 'checker' | 'rings' | 'lines' | 'spot'
+  /** Classified: the name starts redacted and gets declassified as you scroll in. */
+  mystery?: boolean
   line: string
   stats: Stat[]
   foot?: string
@@ -226,12 +228,12 @@ export const COMPANIES: Company[] = [
     id: 'typeface',
     name: 'Typeface',
     role: 'Senior Software Engineer',
-    when: 'Nov 2023 — now',
+    when: 'Nov 2023 — 2025',
     where: 'Bay Area',
     year: 2023,
     theme: { bg: '#FD243E', ink: '#111013', accent: '#111013', soft: '#FF6B7D', name: '#111013' },
     pattern: 'stripes',
-    line: 'Making an enterprise AI marketing platform feel fast. Deleted two-thirds of the JavaScript and nobody noticed, which was the whole point.',
+    line: 'Made an enterprise AI marketing platform feel fast. Deleted two-thirds of the JavaScript and nobody noticed, which was the whole point.',
     stats: [
       { to: 65, prefix: '−', suffix: '%', label: 'JS bundle, code-split + lazy loaded' },
       { text: '60m→2s', label: 'marketing site builds with Next.js ISR' },
@@ -251,6 +253,38 @@ export const COMPANIES: Company[] = [
       color: '#111013',
       title: 'Bundle is 65% smaller',
       body: 'Webpack is taking some time off to process this.',
+    },
+  },
+  {
+    id: 'zoom',
+    name: 'Zoom',
+    role: '<span class="redact" tabindex="0" title="Classified">Engineer</span> Engineer',
+    when: '2025 — now',
+    where: 'Classified',
+    year: 2025,
+    mystery: true,
+    theme: { bg: '#00031F', ink: '#D1DEF2', accent: '#0B5CFF', soft: '#00053D', name: '#0B5CFF' },
+    pattern: 'spot',
+    line: 'Joined in 2025. Something to do with Zoom’s Meeting SDK and Video SDK for the web, which is about all I’m allowed to say. The rest is <span class="redact" tabindex="0">still on mute</span>.',
+    stats: [
+      { text: 'Meeting SDK', label: 'Zoom meetings & webinars, embedded in other apps' },
+      { text: 'Video SDK', label: 'video, audio & screen share for your own UI' },
+      { text: '<span class="redact" tabindex="0">nice try</span>', label: 'numbers pending declassification' },
+    ],
+    foot: 'Full details once I’m allowed to share them. Until then, please enjoy this <b>very mysterious webcam</b>.',
+    tape: ['Meeting SDK', 'Video SDK', 'For the web', '[REDACTED]', 'You’re on mute', 'Camera on', '2025 → now'],
+    props: [
+      { img: 'zoom-camera', x: 80, y: 40, w: 21, depth: 0.8, rot: -6 },
+      { img: 'zoom-tiles', x: 63, y: 84, w: 18, depth: 0.6, rot: 5 },
+      { img: 'zoom-mic', x: 92, y: 80, w: 11, depth: 1, rot: 10 },
+      { img: 'zoom-folder', x: 57, y: 22, w: 11, depth: 0.35, rot: -10 },
+    ],
+    notif: {
+      app: 'Zoom',
+      icon: '●',
+      color: '#0B5CFF',
+      title: 'Meeting starts in 1 minute',
+      body: 'Topic: ████████. Camera optional. Mystery mandatory.',
     },
   },
 ]

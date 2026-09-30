@@ -194,6 +194,9 @@ export function companyScene(section: HTMLElement) {
     num.textContent = fmt(num, 0)
     tl.to(c, { v: to, duration: 0.55, ease: 'power2.out', onUpdate: () => (num.textContent = fmt(num, c.v)) }, at + 0.05)
   })
+  // classified: the name sits under a redaction bar until it has fully risen, then gets declassified
+  const bar = section.querySelector('.redact-bar')
+  if (bar && motion) tl.fromTo(bar, { scaleX: 1 }, { scaleX: 0, duration: 0.35, ease: 'power2.inOut' }, 0.92)
   const foot = section.querySelector('.co__foot')
   if (foot && motion) tl.from(foot, { y: 20, opacity: 0, duration: 0.3, ease: 'power2.out' }, 1.05)
 
@@ -280,6 +283,24 @@ export function endScene() {
     tl.from('.end__title .char', { yPercent: 110, rotation: 8, stagger: 0.02, duration: 0.4, ease: 'power3.out' }, 0.45)
     tl.from(['.end__inner > .eyebrow', '.end__lede', '.end__actions'], { y: 30, opacity: 0, stagger: 0.05, duration: 0.3, ease: 'power2.out' }, 0.55)
   }
+}
+
+/* ——— Zoom's spotlight follows the pointer (fine pointers only; otherwise it drifts by itself) ——— */
+
+export function spotlight(getScene: () => HTMLElement | null) {
+  if (!motion || !matchMedia('(pointer: fine)').matches) return
+  document.documentElement.classList.add('has-pointer')
+  window.addEventListener(
+    'pointermove',
+    (e) => {
+      const spot = getScene()?.querySelector<HTMLElement>('.pattern--spot')
+      if (!spot) return
+      const r = spot.getBoundingClientRect()
+      spot.style.setProperty('--spx', `${(((e.clientX - r.left) / r.width) * 100).toFixed(1)}%`)
+      spot.style.setProperty('--spy', `${(((e.clientY - r.top) / r.height) * 100).toFixed(1)}%`)
+    },
+    { passive: true },
+  )
 }
 
 /* ——— mouse parallax on the toys (fine pointers only) ——— */

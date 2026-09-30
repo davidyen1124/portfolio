@@ -339,7 +339,111 @@ mark {
   background: repeating-linear-gradient(0deg, var(--pc) 0 1px, transparent 1px 44px);
 }
 
-/* floating toys */
+/* Zoom: a spotlight that follows the pointer (or drifts on its own) and lights up the grid */
+@property --spx {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 72%;
+}
+@property --spy {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 42%;
+}
+.pattern--spot {
+  --pc: color-mix(in srgb, #0b5cff 55%, transparent);
+  background:
+    radial-gradient(circle at var(--spx) var(--spy), rgb(11 92 255 / 0.3), transparent 42vmax),
+    radial-gradient(var(--pc) 1.4px, transparent 1.9px) 0 0 / 22px 22px;
+  -webkit-mask-image: radial-gradient(circle 48vmax at var(--spx) var(--spy), #000, rgb(0 0 0 / 0.18) 62%, transparent);
+  mask-image: radial-gradient(circle 48vmax at var(--spx) var(--spy), #000, rgb(0 0 0 / 0.18) 62%, transparent);
+  animation: spot-drift 16s ease-in-out infinite alternate;
+  transition: --spx 0.9s var(--ease-out), --spy 0.9s var(--ease-out);
+}
+.has-pointer .pattern--spot {
+  animation: none;
+}
+@keyframes spot-drift {
+  0% {
+    --spx: 78%;
+    --spy: 30%;
+  }
+  50% {
+    --spx: 30%;
+    --spy: 60%;
+  }
+  100% {
+    --spx: 64%;
+    --spy: 78%;
+  }
+}
+
+/* redactions: black bars that declassify into something useless on hover/tap */
+.redact {
+  background: var(--ink);
+  color: var(--ink);
+  border-radius: 3px;
+  padding: 0 0.15em;
+  cursor: help;
+  outline-offset: 2px;
+  transition: background 0.25s, color 0.25s;
+}
+.redact:hover,
+.redact:focus-visible,
+.redact:focus {
+  background: transparent;
+  color: var(--name);
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+}
+.co__role .redact {
+  background: var(--bg);
+  color: var(--bg);
+}
+.co__role .redact:hover,
+.co__role .redact:focus {
+  background: transparent;
+  color: var(--name);
+}
+.co__rec {
+  color: #ff3b4e;
+  font-weight: 700;
+  animation: blink 1.2s steps(2) infinite;
+}
+.is-mystery .co__name {
+  position: relative;
+  width: fit-content;
+}
+.redact-bar {
+  position: absolute;
+  inset: 0.04em -0.08em 0 -0.08em;
+  display: grid;
+  place-items: center;
+  background: #000;
+  border: 1px solid rgb(11 92 255 / 0.55);
+  border-radius: 0.04em;
+  transform-origin: 100% 50%;
+  pointer-events: none;
+}
+.redact-bar i {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: max(11px, 0.1em);
+  font-weight: 700;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: #0b5cff;
+}
+/* product names are long; keep the three Zoom stats on one row */
+.is-mystery .stat__num.is-word {
+  font-size: clamp(24px, 2.6vw, 42px);
+}
+.stat__num .redact {
+  padding: 0 0.08em;
+  border-radius: 0.06em;
+}
+
+/* floating toys *//* floating toys */
 .props {
   position: absolute;
   inset: 0;
@@ -1678,6 +1782,9 @@ mark {
   .co__stats.is-four .stat__num {
     font-size: clamp(22px, 6.6vw, 30px);
   }
+  .is-mystery .stat__num.is-word {
+    font-size: clamp(15px, 4.6vw, 22px);
+  }
   .stat__label {
     font-size: 9.5px;
     letter-spacing: 0;
@@ -1937,8 +2044,13 @@ mark {
   .hero__cue span,
   .projects__hint span,
   .bot-launch .badge,
-  .rewind__rew {
+  .rewind__rew,
+  .co__rec,
+  .pattern--spot {
     animation: none;
+  }
+  .redact-bar {
+    display: none;
   }
 }
 
