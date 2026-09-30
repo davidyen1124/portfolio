@@ -1,3 +1,6 @@
+// Touch-scroll QA: real touch swipe gestures (via Chromium's DevTools protocol) in iPhone emulation.
+// Checks the page scrolls, that a swipe on the open DavidBot sheet reaches the page, and that a long chat scrolls.
+// usage: node scripts/qa-swipe.mjs [url]
 import { chromium, devices } from 'playwright'
 const URL = process.argv[2] || 'https://davidyen1124.github.io/portfolio/'
 const b = await chromium.launch()

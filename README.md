@@ -57,11 +57,12 @@ npm run art:process              # trim + WebP at two sizes → public/img, real
 npm run dev -- --port 5199 &
 npm run qa -- --vp desktop,laptop,wide,tablet,mobile,small,reduced,landscape
 node scripts/qa-ui.mjs
+node scripts/qa-swipe.mjs http://localhost:5199/portfolio/
 ```
 
 `scripts/qa.mjs` walks the whole page in 24px steps on each viewport. At every step it checks for horizontal overflow, text clipped off-screen, toys sitting on top of readable copy, copy blocks colliding, the ticker tape running over stats, console errors and broken images. It also saves screenshots and contact sheets to `qa-shots/`. `?qa` in the URL turns off smoothing so every frame is exactly where the test scrolled.
 
-`scripts/qa-ui.mjs` clicks through the cookie banner, notifications, Do Not Disturb and a DavidBot conversation on desktop and mobile.
+`scripts/qa-ui.mjs` clicks through the cookie banner, notifications, Do Not Disturb and a DavidBot conversation on desktop and mobile. `scripts/qa-swipe.mjs` does real touch swipes on an emulated iPhone, with and without the chat open.
 
 ## License
 
