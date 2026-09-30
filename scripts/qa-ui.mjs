@@ -78,9 +78,11 @@ for (const [name, ctxOpts] of [
   const before = await redact.evaluate((el) => getComputedStyle(el).backgroundColor)
   if (ctxOpts.hasTouch) await redact.tap()
   else await redact.hover()
-  await page.waitForTimeout(400)
+  await page.waitForTimeout(700)
   const after = await redact.evaluate((el) => getComputedStyle(el).backgroundColor)
-  check(before !== after && /0\)$|transparent/.test(after), `redaction reveals on ${ctxOpts.hasTouch ? 'tap' : 'hover'} (${before} → ${after})`)
+  // the bar fades out over 0.25s, so judge the alpha rather than an exact string
+  const alpha = after === 'transparent' ? 0 : Number((after.match(/rgba\([^)]*,\s*([\d.]+)\)/) || [0, 1])[1])
+  check(before !== after && alpha < 0.05, `redaction reveals on ${ctxOpts.hasTouch ? 'tap' : 'hover'} (${before} → ${after})`)
   await shot('5b-zoom-reveal')
 
   // bot
