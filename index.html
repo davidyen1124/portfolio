@@ -1,49 +1,151 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="page-title">David Yen</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/PointerLockControls.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>David Yen · Full-stack engineer</title>
+    <meta name="description" content="David Yen, full-stack engineer in Sunnyvale, CA. Nine-plus years across Typeface, Houzz, Yahoo, Dcard and a few too many side projects. Mostly TypeScript." />
+    <meta name="theme-color" content="#F4EFE6" />
+    <link rel="canonical" href="https://davidyen1124.github.io/portfolio/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="David Yen · Full-stack engineer" />
+    <meta property="og:description" content="Six companies, too many side projects, one cookie banner. Scroll responsibly." />
+    <meta property="og:url" content="https://davidyen1124.github.io/portfolio/" />
+    <meta property="og:image" content="https://davidyen1124.github.io/portfolio/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="David Yen · Full-stack engineer" />
+    <meta name="twitter:description" content="Six companies, too many side projects, one cookie banner. Scroll responsibly." />
+    <meta name="twitter:image" content="https://davidyen1124.github.io/portfolio/og.jpg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
-  <body>
-    <div id="loading">
-      <div class="panel pixel-panel">
-        <p class="panel-kicker">Loading world seed</p>
-        <h2>Generating David's Portfolio Realm...</h2>
-      </div>
+  <body class="is-loading">
+    <div class="loader" id="loader" aria-hidden="true">
+      <p class="loader__mark">DY<i>®</i></p>
+      <p class="loader__line" id="loaderLine">Compiling personality (tsc --strict)…</p>
+      <p class="loader__pct"><b id="loaderPct">0</b>%</p>
     </div>
-    <div id="blocker">
-      <div id="instructions" class="panel pixel-panel">
-        <p class="panel-kicker">Adventure Mode</p>
-        <h1 id="museum-title">David Yen</h1>
-        <p>Traverse a voxel gallery built from resume highlights and recent work.</p>
-        <div class="instructions-grid">
-          <p><span class="keycap">WASD</span> Walk the map</p>
-          <p><span class="keycap">Mouse</span> Look around</p>
-          <p><span class="keycap">Space</span> Jump</p>
-          <p><span class="keycap">Click</span> Open links</p>
+
+    <header class="hud" id="hud">
+      <a class="hud__logo" href="#top" data-goto="#top" aria-label="David Yen, back to top">David Yen<i>®</i></a>
+      <p class="hud__year" aria-hidden="true"><span class="hud__rew" id="hudRew">◀◀</span><b id="hudYear">2026</b><span class="hud__where" id="hudWhere">Now</span></p>
+      <nav class="hud__nav" aria-label="Primary">
+        <a class="hud__link" href="resume.pdf" target="_blank" rel="noopener">Résumé</a>
+        <a class="hud__cta" href="#contact" data-goto="#contact">Say hi</a>
+      </nav>
+    </header>
+    <div class="progress" aria-hidden="true"><i></i></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <main id="main">
+      <!-- ——— Who is this ——— -->
+      <section class="scene hero" id="top" data-theme="hero" data-year="2026" data-where="Now">
+        <div class="stage hero__stage">
+          <div class="pattern pattern--dots" aria-hidden="true"></div>
+          <div class="props" data-props="hero"></div>
+          <div class="hero__copy safe">
+            <div class="hero__top">
+              <p class="eyebrow hero__eyebrow"><span>Portfolio</span><span>Sunnyvale, CA</span><span>Est. 2012</span></p>
+              <p class="eyebrow hero__cue">Scroll. It’s a portfolio, it doesn’t bite. <span aria-hidden="true">↓</span></p>
+            </div>
+            <h1 class="hero__name" aria-label="David Yen"><span class="hero__word" aria-hidden="true">David</span> <span class="hero__word" aria-hidden="true">Yen</span></h1>
+            <div class="hero__row">
+              <p class="hero__lede">
+                Full-stack engineer. Nine-plus years making the web <mark>faster</mark> across SaaS, marketplaces, ad-tech and social.
+                Mostly TypeScript. <em>Occasionally sleeps.</em>
+              </p>
+              <ul class="hero__chips" aria-label="At a glance">
+                <li><b>9+</b><span>years shipping</span></li>
+                <li><b>6</b><span>companies</span></li>
+                <li><b>−65%</b><span>JavaScript</span></li>
+                <li><b>150k+</b><span>app installs</span></li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <button id="enter-world" type="button">Enter World</button>
-      </div>
-    </div>
+      </section>
 
-    <!-- Mobile joystick controls -->
-    <div id="joystick-left" class="joystick-container">
-      <div class="joystick"></div>
-    </div>
-    <div id="joystick-right" class="joystick-container">
-      <div class="joystick"></div>
-    </div>
+      <!-- ——— Rewind ——— -->
+      <section class="scene rewind" id="rewind" data-theme="rewind" data-year="2026" data-where="Rewinding">
+        <div class="stage rewind__stage">
+          <div class="rewind__scan" aria-hidden="true"></div>
+          <div class="rewind__osd" aria-hidden="true"><span class="rewind__rew">◀◀ REW</span><span class="rewind__tc" id="rewindTc">SP 00:00:00</span></div>
+          <div class="rewind__copy safe">
+            <p class="eyebrow">Previously, on David Yen</p>
+            <p class="rewind__year" aria-hidden="true"><span id="rewindYear">2026</span></p>
+            <p class="rewind__line">Let’s rewind. Everything below happened in order, which is more than I can say for my git history.</p>
+          </div>
+        </div>
+      </section>
 
-    <script src="js/museum.js"></script>
+      <!-- ——— Six companies (rendered from src/content.ts) ——— -->
+      <div id="companies"></div>
+
+      <!-- ——— Side projects ——— -->
+      <section class="scene projects" id="projects" data-theme="projects" data-year="2026" data-where="After hours">
+        <div class="stage projects__stage">
+          <div class="pattern pattern--grid" aria-hidden="true"></div>
+          <div class="projects__track" id="track">
+            <header class="projects__intro">
+              <p class="eyebrow">After hours · 60+ public repos</p>
+              <h2 class="projects__title"><span>Side</span> <span>projects</span></h2>
+              <p class="projects__lede">Things I built because nobody stopped me. Most of them are useful. Some of them are soup.</p>
+              <p class="projects__hint">Keep scrolling <span aria-hidden="true">→</span></p>
+            </header>
+            <div class="projects__cards" id="cards"></div>
+            <aside class="projects__more" id="more">
+              <p class="eyebrow">…and the rest of the pile</p>
+              <ul class="more__list" id="moreList"></ul>
+              <a class="btn btn--light" href="https://github.com/davidyen1124?tab=repositories" target="_blank" rel="noopener">All repos on GitHub ↗</a>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ——— The end ——— -->
+      <footer class="scene end" id="contact" data-theme="end" data-year="2026" data-where="Now">
+        <div class="end__inner">
+          <p class="eyebrow">That’s the whole scroll</p>
+          <h2 class="end__title"><span>Let’s build</span> <span>something<i>.</i></span></h2>
+          <p class="end__lede">I’m a full-stack engineer who likes making big products feel small and fast. If you have one of those, or a bug that needs a rubber duck, say hi.</p>
+          <div class="end__actions">
+            <a class="btn btn--big" href="mailto:davidyen1124@gmail.com">davidyen1124@gmail.com</a>
+            <a class="btn" href="resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a>
+            <a class="btn" href="https://github.com/davidyen1124" target="_blank" rel="noopener">GitHub ↗</a>
+          </div>
+          <div class="end__grid">
+            <div>
+              <h3>Awards</h3>
+              <ul>
+                <li><b>Winner</b> · Typeface Hackathon 2024 · “Blend with Multi-channel Feeds”</li>
+                <li><b>1st prize</b> · IDEAS Show 2013 · Friendly Restaurant Taipei</li>
+                <li><b>1st place</b> · Mobile Hero 2012 · Chinese Band</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Education</h3>
+              <ul>
+                <li><b>Tamkang University</b> · B.S. Computer Science, 2015 · Taipei</li>
+              </ul>
+              <h3>Toolbox</h3>
+              <ul class="end__tags">
+                <li>TypeScript</li><li>JavaScript</li><li>React</li><li>Next.js</li><li>Node.js</li><li>Python</li><li>AWS</li>
+              </ul>
+            </div>
+          </div>
+          <p class="end__fine">Built with TypeScript, Vite, GSAP and a small army of Codex-generated toys. No cookies were tracked in the making of this website. The banner was lying. © <span id="yearNow">2026</span> David Yen.</p>
+        </div>
+      </footer>
+    </main>
+
+    <div id="ui"></div>
+
+    <noscript>
+      <style>.loader{display:none}</style>
+      <p style="padding:2rem;font:16px/1.5 system-ui">David Yen, full-stack engineer. Typeface (2023–now), Houzz (2021–2023), Yahoo (2017–2021), Dcard (2013–2015), CHOCOLABS (2014–2015), Sparks Lab (2012–2015). Email davidyen1124@gmail.com.</p>
+    </noscript>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

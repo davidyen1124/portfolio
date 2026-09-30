@@ -1,59 +1,67 @@
-# 🏛️ Welcome to My Personal Code Museum
+# David Yen · portfolio
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/davidyen1124/portfolio?style=social)](https://github.com/davidyen1124/portfolio) [![GitHub forks](https://img.shields.io/github/forks/davidyen1124/portfolio?style=social)](https://github.com/davidyen1124/portfolio/fork) [![GitHub watchers](https://img.shields.io/github/watchers/davidyen1124/portfolio?style=social)](https://github.com/davidyen1124/portfolio) [![GitHub issues](https://img.shields.io/github/issues/davidyen1124/portfolio)](https://github.com/davidyen1124/portfolio/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/davidyen1124/portfolio)](https://github.com/davidyen1124/portfolio/pulls) [![GitHub last commit](https://img.shields.io/github/last-commit/davidyen1124/portfolio)](https://github.com/davidyen1124/portfolio/commits/main) [![GitHub license](https://img.shields.io/github/license/davidyen1124/portfolio)](./LICENSE)
+[![Deploy](https://github.com/davidyen1124/portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/davidyen1124/portfolio/actions/workflows/deploy.yml)
 
-_Please maintain complete silence in the gallery. No running, no food, and absolutely no touching the exhibits with your grubby little fingers._
+**Live: [davidyen1124.github.io/portfolio](https://davidyen1124.github.io/portfolio/)**
 
-## 🎨 What's This Masterpiece?
+A scroll-driven portfolio. One screen per company, each in that company's colours, stacked like posters: every screen slides up over the last one while a year counter in the header ticks from 2012 to now.
 
-Behold, a groundbreaking innovation in personal portfolio presentation! Instead of boring you with yet another static webpage filled with buzzwords and stock photos, I've created an actual 3D museum. Because why list your projects when you can force people to _walk_ through them, right?
+The old version was a walk-around 3D museum. It is in the git history, where it can think about what it did.
 
-## 🎮 How to Navigate This Pretentious Gallery
+## What's on the page
 
-1. **WASD/Arrow Keys** - For those cultured enough to know how to walk
-2. **Mouse** - Wave it around like you're conducting an orchestra
-3. **Click** - To interact with the exhibits (yes, you're actually allowed to touch these)
-4. **Paintings** - They're not NFTs, I promise. Click them to interact
-5. **Mobile Users** - Virtual joysticks appear for those who prefer their art on-the-go
+| Screen | Palette | Toys |
+|---|---|---|
+| Hero: who is this | cream, ink, tomato | laptop, bubble tea, keycap, a rubber duck with opinions |
+| Rewind: 2026 → 2012 | VHS black | tracking lines, a timecode that spins backwards |
+| Sparks Lab (2012) | Android green | phone, trophy, guzheng, lightning |
+| Dcard (2013) | Dcard blues | profile card, push bell, midnight clock, paper plane |
+| CHOCOLABS (2014) | chocolate + candy pink | chocolate bar, chocolate vinyl, headphones, test tube |
+| Yahoo (2017) | Yahoo purple | exclamation mark, bar chart, hourglass, anomaly under a magnifier |
+| Houzz (2021) | Houzz green on linen | sofa, arc lamp, monstera, tiny house |
+| Typeface (2023–now) | Typeface red + black | cursor, a box in a C-clamp (the bundle), canvas, rosette |
+| Side projects | black | a horizontal track of cards, star counts fetched live from GitHub |
+| The end | cream | contact, awards, education |
 
-## 🎵 Special Exhibition
+And the humour department:
 
-Keep an eye out for the special Spotify exhibit! It's like those audio guides at museums, but actually playing something you might want to listen to.
+- **Fake notifications** from apps you don't have (a recruiter who can't spell "David", Yahoo Mail from 2009, Webpack in therapy). The third one offers Do Not Disturb. Mom gets through anyway.
+- **A cookie banner** for a site with no cookies. Strictly necessary cookies can't be unticked (nice try). Accepting makes it rain cookies.
+- **DavidBot™**, an "AI assistant" made of regular expressions with low self-esteem.
 
-## ⚡ Features
+## Stack
 
-- Fully immersive 3D experience (because 2D is so last century)
-- Real-time GitHub repository displays (yes, I'm showing off)
-- Spotify integration (because every gallery needs a soundtrack)
-- Résumé sections displayed right on the gallery walls
-- Fancy lighting and glossy floors (to make my code look better than it actually is)
-- Mobile-friendly controls (art appreciation for the bus commute)
-- Optimized performance (so your device doesn't burst into flames)
-- No gift shop (sorry, not sorry)
+TypeScript (strict) + Vite, GSAP ScrollTrigger for the scroll choreography, Lenis for smooth scrolling. No framework. Content lives in [`src/content.ts`](src/content.ts), and the facts come from [`public/resume.pdf`](public/resume.pdf).
 
-## 🏃‍♂️ Quick Start
+```bash
+npm install
+npm run dev        # http://localhost:5173/portfolio/
+npm run build      # type-check + production build into dist/
+```
 
-1. Visit [https://d.daviddennislinda.com](https://d.daviddennislinda.com)
-2. Click to start
-3. Get lost in the magnificence of my work
-4. Try not to bump into the virtual walls
+Pushing to `main` deploys to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 
-## 🤔 Why?
+## The art
 
-Because PowerPoint presentations are boring, and LinkedIn is... well, LinkedIn.
+Every illustration was generated with **Codex CLI**'s built-in `image_gen` tool: 40 isolated "designer vinyl toy" renders on transparent backgrounds, so they can float as parallax layers over any brand colour. The briefs and the shared style prompt are in [`art/manifest.mjs`](art/manifest.mjs).
 
-## 🎫 Admission Fee
+```bash
+npm run art:gen -- hero-duck     # one codex exec per image → art/raw/<name>.png (git-ignored)
+npm run art:process              # trim + WebP at two sizes → public/img, real widths → src/art-sizes.json
+```
 
-Free! (But I accept GitHub stars as donations)
+## QA
 
-## 🚫 Museum Rules
+```bash
+npm run dev -- --port 5199 &
+npm run qa -- --vp desktop,laptop,wide,tablet,mobile,small,reduced,landscape
+node scripts/qa-ui.mjs
+```
 
-- No flash photography
-- No running in the corridors
-- No asking "but why didn't you just use a normal website?"
-- No pointing out that this is totally overengineered
-- No complaining if your ancient device struggles with WebGL
+`scripts/qa.mjs` walks the whole page in 24px steps on each viewport. At every step it checks for horizontal overflow, text clipped off-screen, toys sitting on top of readable copy, copy blocks colliding, the ticker tape running over stats, console errors and broken images. It also saves screenshots and contact sheets to `qa-shots/`. `?qa` in the URL turns off smoothing so every frame is exactly where the test scrolled.
 
-## 👨‍💻 Curator
+`scripts/qa-ui.mjs` clicks through the cookie banner, notifications, Do Not Disturb and a DavidBot conversation on desktop and mobile.
 
-Created by David Yen, your friendly neighborhood code artist who clearly had too much time on their hands.
+## License
+
+MIT

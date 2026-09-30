@@ -1,41 +1,30 @@
-# Agent Onboarding Guide
+# Agent notes
 
-Welcome to the repository! This short document explains how to get oriented and which tools are already available. It assumes you are opening the project for the first time.
+A scroll-driven portfolio: TypeScript + Vite + GSAP ScrollTrigger + Lenis, deployed to GitHub Pages at https://davidyen1124.github.io/portfolio/ (Vite `base: '/portfolio/'`). There is no custom domain. Keep it that way.
 
-## Project Overview
-- A personal portfolio site presented as a 3D museum.
-- Built with **Three.js** and vanilla JavaScript. Core logic lives in `js/museum.js`.
-- Styling is in `css/styles.css`; the main page is `index.html`.
-- Latest commit message: _"Implement basic jumping physics"_ (commit `65fd2a9`).
+## Layout of the code
 
-## Getting Started
-1. Install dependencies using **Node.js**:
-   ```bash
-   npm install
-   ```
-2. Run linters before committing:
-   ```bash
-   npm run lint
-   ```
-   - This runs HTML, CSS, and JS linters defined in `package.json`.
-3. Open `index.html` in a browser to view the museum.
+- `src/content.ts`: every word, number, colour and toy position. Facts must match `public/resume.pdf`. Jokes are welcome, but only when they are obviously jokes.
+- `src/render.ts`: builds the company screens, hero toys and project cards from the content.
+- `src/scenes.ts`: all scroll choreography. Each scene after the hero has `margin-top: -100vh` and a sticky `.stage`, so it slides over the previous one. A scene's timeline spans three screens: entering, alone, covered.
+- `src/ui/`: the fake notifications, cookie banner and DavidBot.
+- `art/manifest.mjs` + `scripts/gen.mjs`: images come from Codex CLI's `image_gen`. `scripts/process.mjs` writes `public/img/*.webp` and `src/art-sizes.json`.
 
-## Coding Guidelines
-- JavaScript follows ESLint rules from `.eslintrc.json`:
-  - 2‑space indentation.
-  - Single quotes.
-  - No semicolons.
-- CSS is checked with Stylelint using `.stylelintrc.json`.
-- HTML validation rules are defined in `.htmlvalidate.json`.
+## Gotchas that already bit once
 
-## What’s Already Implemented
-- Complete scene setup with lighting, camera controls, and movement.
-- Basic jumping physics as introduced in the latest commit.
-- GitHub Actions workflow (`.github/workflows/lint.yml`) automatically runs linters on pushes and pull requests.
+- GSAP inlines `translate/rotate/scale: none` on every element it animates. Never rely on those CSS properties on an animated element. Centre toys with the `.prop__c` wrapper, and put hover effects on elements GSAP doesn't touch.
+- Never put a CSS `transition` on `transform` for an element GSAP tweens: GSAP will read the mid-transition value.
+- `srcset` with `w` descriptors makes an image's intrinsic size come from `sizes`, so size toys with `width: 100%`, never `auto`.
+- `[hidden]` loses to any `display:` rule; add an explicit `[hidden] { display: none }`.
+- Phones and portrait tablets use the stacked layout; the breakpoint is duplicated in `style.css` and `scenes.ts` (`stacked`).
 
-## Tips for New Agents
-- Review the existing configuration files to understand linting and formatting expectations.
-- Keep assets like `assets/resume.json` and `assets/resume.pdf` synchronized when updating résumé data.
-- Avoid large binary additions without necessity since the repo is primarily code and small assets.
+## Before pushing
 
-For additional project details, read `README.md`.
+```bash
+npm run build
+npm run dev -- --port 5199 &   # then:
+npm run qa -- --vp desktop,tablet,mobile,small
+node scripts/qa-ui.mjs
+```
+
+Both should report zero issues, then look at the contact sheets in `qa-shots/`.
