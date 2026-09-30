@@ -41,7 +41,7 @@ function companyTag(c: Company, i: number) {
   const style = `--bg:${t.bg};--ink:${t.ink};--accent:${t.accent};--soft:${t.soft};--name:${t.name ?? t.accent}`
   const tapeWords = [...c.tape, ...c.tape].map((w) => `<span>${w}</span>`).join('')
   return `
-  <section class="scene co co--${c.id}${c.mystery ? ' is-mystery' : ''}" id="${c.id}" data-theme="${c.id}" data-year="${c.year}" data-where="${c.where}" style="${style}">
+  <section class="scene co co--${c.id}${c.mystery ? ' is-mystery' : ''}" id="${c.id}" data-theme="${c.id}" data-year="${c.year}" style="${style}">
     <div class="stage">
       <div class="pattern pattern--${c.pattern}" aria-hidden="true"></div>
       <div class="props" aria-hidden="true">${c.props.map(propTag).join('')}</div>

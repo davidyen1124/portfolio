@@ -59,7 +59,7 @@ html.lenis body {
   height: auto;
 }
 .lenis.lenis-smooth {
-  scroll-behavior: auto !important;
+  scroll-behavior: auto;
 }
 /* keep wheel scrolling inside the chat on desktop; on touch, iOS must be free to hand the swipe to the page */
 @media (pointer: fine) {
@@ -1152,7 +1152,7 @@ mark {
   font-size: 15px;
 }
 .end__tags {
-  display: flex !important;
+  display: flex;
   flex-wrap: wrap;
 }
 .end__tags li {
@@ -1242,6 +1242,101 @@ mark {
   font-weight: 600;
   color: #0a66c2;
   padding: 0;
+}
+
+/* fake Chrome permission bubble (Zoom screen). Chrome's own look, so it borrows the system font */
+.perm {
+  position: fixed;
+  z-index: 66;
+  top: 6px;
+  left: 18px;
+  width: 330px;
+  padding: 14px 16px 16px;
+  border-radius: 8px;
+  background: #fff;
+  color: #202124;
+  font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 1px 3px rgb(60 64 67 / 0.3), 0 4px 10px 3px rgb(60 64 67 / 0.18);
+}
+/* the little arrow that points up at the address bar */
+.perm::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 26px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  rotate: 45deg;
+  box-shadow: -1px -1px 1px rgb(60 64 67 / 0.12);
+}
+.perm__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.perm__head b {
+  font-weight: 600;
+  word-break: break-all;
+}
+.perm__x {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: -3px -6px 0 0;
+  border-radius: 50%;
+  color: #5f6368;
+  font-size: 20px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+.perm__x:hover {
+  background: #f1f3f4;
+}
+.perm ul {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.perm li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.perm li svg {
+  flex: none;
+  color: #5f6368;
+}
+.perm__btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.perm__btns button {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 4px;
+  font: 500 13px/1 system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: 0.01em;
+}
+.perm__block {
+  color: #1a73e8;
+  border: 1px solid #dadce0;
+}
+.perm__block:hover {
+  background: #f8faff;
+}
+.perm__allow {
+  background: #1a73e8;
+  color: #fff;
+}
+.perm__allow:hover {
+  background: #1765cc;
 }
 
 /* fake cookie banner */
@@ -1735,7 +1830,6 @@ mark {
   .hud__year {
     justify-self: center;
   }
-  .hud__where,
   .hud__link {
     display: none;
   }
@@ -1835,6 +1929,11 @@ mark {
   .notifs {
     top: calc(var(--hud-h) + 4px);
     right: 12px;
+  }
+  .perm {
+    left: 10px;
+    right: 10px;
+    width: auto;
   }
   .cookie {
     left: 12px;

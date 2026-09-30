@@ -13,6 +13,7 @@ import { companyScene, endScene, heroIntro, heroScene, measureBands, mouseParall
 import { initBot } from './ui/bot'
 import { cookieBanner } from './ui/cookies'
 import { initNotifs, notify } from './ui/notify'
+import { permissionPrompt } from './ui/permission'
 
 gsap.registerPlugin(ScrollTrigger)
 // the mobile URL bar resizing the viewport shouldn't re-measure (and jump) the sticky scenes
@@ -49,14 +50,14 @@ document.addEventListener('click', (e) => {
 })
 
 /* ——— HUD: year, place and colours follow whichever screen is on top ——— */
+const ui = $('#ui')
 const hud = $('#hud')
 const hudYear = $('#hudYear')
-const hudWhere = $('#hudWhere')
 const themeMeta = $<HTMLMetaElement>('meta[name="theme-color"]')
 const scenes = $$('.scene')
 let current: HTMLElement | null = null
 
-const NOTIFS: Record<string, Notif> = Object.fromEntries(COMPANIES.map((c) => [c.id, c.notif]))
+const NOTIFS: Record<string, Notif> = Object.fromEntries(COMPANIES.flatMap((c) => (c.notif ? [[c.id, c.notif]] : [])))
 NOTIFS.projects = PROJECTS_NOTIF
 let ready = false
 const pinged = new Set<string>()
@@ -71,7 +72,6 @@ function onScene(scene: HTMLElement) {
   hud.style.setProperty('--hud-accent', accent)
   document.documentElement.style.setProperty('--hud-accent', accent)
   themeMeta.content = bg
-  hudWhere.textContent = scene.dataset.where ?? ''
   const id = scene.id
   // a notification for each screen, once per visit, a moment after you arrive
   const n = NOTIFS[id]
@@ -79,6 +79,11 @@ function onScene(scene: HTMLElement) {
     pinged.add(id)
     const at = id
     setTimeout(() => current?.id === at && notify(n), 1400)
+  }
+  // the Zoom screen asks for your camera and microphone instead. It doesn't mean it.
+  if (id === 'zoom' && ready && !QA && !pinged.has(id)) {
+    pinged.add(id)
+    setTimeout(() => current?.id === 'zoom' && permissionPrompt(ui), 1200)
   }
 }
 
@@ -143,7 +148,6 @@ async function start() {
   window.scrollTo(0, 0)
   await load()
   ScrollTrigger.refresh()
-  const ui = $('#ui')
   initNotifs(ui)
   const out = gsap.timeline()
   out.to('#loader', { yPercent: -100, duration: QA ? 0 : 1.05, ease: 'expo.inOut' })
@@ -158,7 +162,7 @@ async function start() {
   initBot(ui)
   if (QA) {
     // the QA script pokes the humour department directly
-    Object.assign(window, { __qa: { gsap, notify, cookieBanner: () => cookieBanner(ui), notifs: { HERO_NOTIF, END_NOTIF, PROJECTS_NOTIF, ...NOTIFS } } })
+    Object.assign(window, { __qa: { gsap, notify, permission: () => permissionPrompt(ui), cookieBanner: () => cookieBanner(ui), notifs: { HERO_NOTIF, END_NOTIF, PROJECTS_NOTIF, ...NOTIFS } } })
     document.documentElement.dataset.ready = '1'
     return
   }

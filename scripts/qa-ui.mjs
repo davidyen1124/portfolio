@@ -29,6 +29,18 @@ for (const [name, ctxOpts] of [
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
   const shot = (n) => page.screenshot({ path: `${OUT}/${name}-${n}.jpg`, type: 'jpeg', quality: 75 })
 
+  // booby-trap the real camera/mic APIs: the fake permission prompt must never touch them
+  await page.addInitScript(() => {
+    const trip = (name) => () => {
+      window.__mediaTouched = name
+      return Promise.reject(new Error('qa: blocked'))
+    }
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.getUserMedia = trip('getUserMedia')
+      navigator.mediaDevices.enumerateDevices = trip('enumerateDevices')
+    }
+    if (navigator.permissions) navigator.permissions.query = trip('permissions.query')
+  })
   await page.goto(URL, { waitUntil: 'networkidle' })
   // loader → intro → cookie banner ~1.6s after
   await page.waitForSelector('.cookie', { timeout: 15000 })
@@ -84,6 +96,15 @@ for (const [name, ctxOpts] of [
   const alpha = after === 'transparent' ? 0 : Number((after.match(/rgba\([^)]*,\s*([\d.]+)\)/) || [0, 1])[1])
   check(before !== after && alpha < 0.05, `redaction reveals on ${ctxOpts.hasTouch ? 'tap' : 'hover'} (${before} → ${after})`)
   await shot('5b-zoom-reveal')
+  check(await page.isVisible('.perm'), 'zoom screen shows the fake Chrome camera/mic prompt')
+  const permText = (await page.textContent('.perm')) ?? ''
+  check(/wants to/.test(permText) && /microphones/.test(permText) && /cameras/.test(permText), 'prompt reads "<site> wants to · microphones · cameras"')
+  await shot('5c-permission')
+  await page.click('.perm__allow')
+  await page.waitForTimeout(900)
+  check((await page.locator('.perm').count()) === 0, 'Allow closes the prompt')
+  check((await page.locator('.notif__text').allTextContents()).some((t) => t.includes('still on mute')), 'Allow answers with the "still on mute" notification')
+  check((await page.evaluate(() => window.__mediaTouched)) === undefined, `camera/mic APIs never touched (${await page.evaluate(() => window.__mediaTouched)})`)
 
   // bot
   await page.waitForTimeout(4500)

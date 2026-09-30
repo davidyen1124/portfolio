@@ -57,7 +57,8 @@ export interface Company {
   /** Keywords on the ticker tape. */
   tape: string[]
   props: Prop[]
-  notif: Notif
+  /** Omitted for Zoom, which gets a (fake) camera/mic permission prompt instead. */
+  notif?: Notif
 }
 
 export interface Notif {
@@ -279,13 +280,6 @@ export const COMPANIES: Company[] = [
       { img: 'zoom-mic', x: 92, y: 80, w: 11, depth: 1, rot: 10 },
       { img: 'zoom-folder', x: 57, y: 22, w: 11, depth: 0.35, rot: -10 },
     ],
-    notif: {
-      app: 'Zoom',
-      icon: '●',
-      color: '#0B5CFF',
-      title: 'Meeting starts in 1 minute',
-      body: 'Topic: ████████. Camera optional. Mystery mandatory.',
-    },
   },
 ]
 
@@ -446,6 +440,25 @@ export const HERO_PROPS: Prop[] = [
   { img: 'hero-boba', x: 11, y: 33, w: 9, mw: 22, mx: 16, my: 26, depth: 0.9, rot: 10 },
   { img: 'hero-keycap', x: 37, y: 26, w: 7.5, mw: 15, mx: 42, my: 22, depth: 0.35, rot: -14 },
 ]
+
+/** What the fake Chrome camera/mic prompt on the Zoom screen says after you answer it.
+ *  It is plain HTML: nothing ever calls getUserMedia, so nothing is ever turned on. */
+export const PERMISSION = {
+  allow: {
+    app: 'Zoom',
+    icon: '●',
+    color: '#0B5CFF',
+    title: 'Joined with video. Kind of.',
+    body: 'Nothing was turned on. This is a static website, it can’t see you. You are, however, still on mute.',
+  },
+  block: {
+    app: 'Chrome',
+    icon: '⊘',
+    color: '#5F6368',
+    title: 'Camera and microphone blocked',
+    body: 'Fair. The very mysterious webcam respects your boundaries.',
+  },
+} satisfies Record<string, Notif>
 
 export const HERO_NOTIF: Notif = {
   app: 'LinkedIn',
