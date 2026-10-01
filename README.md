@@ -1,3 +1,5 @@
+<a href="https://davidyen1124.github.io/portfolio/"><img src=".github/cover.jpg" alt="David Yen, a scroll-driven portfolio: seven companies stacked like posters, newest first, with Zoom classified on top" width="100%" /></a>
+
 # David Yen · portfolio
 
 [![Deploy](https://github.com/davidyen1124/portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/davidyen1124/portfolio/actions/workflows/deploy.yml)
@@ -45,6 +47,8 @@ Pushing to `main` deploys to GitHub Pages via [`.github/workflows/deploy.yml`](.
 ## The art
 
 Every illustration was generated with **Codex CLI**'s built-in `image_gen` tool: 44 isolated "designer vinyl toy" renders on transparent backgrounds, so they can float as parallax layers over any brand colour. The briefs and the shared style prompt are in [`art/manifest.mjs`](art/manifest.mjs).
+
+The cover at the top of this README is built from the same pieces (fonts, toys and the company colours in `src/content.ts`) in [`art/cover/index.html`](art/cover/index.html), and rendered at 2560×1280 with `node scripts/cover.mjs` while the dev server is running.
 
 ```bash
 npm run art:gen -- hero-duck     # one codex exec per image → art/raw/<name>.png (git-ignored)

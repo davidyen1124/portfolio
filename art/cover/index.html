@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>README cover</title>
+    <!-- Rendered to .github/cover.jpg by scripts/cover.mjs. Served by the Vite dev server so the
+         site's fonts, toys and company colours (src/content.ts) are the real ones. -->
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --cream: #f4efe6;
+        --ink: #111;
+        --tomato: #ff4a1c;
+        --display: 'Bricolage Grotesque Variable', sans-serif;
+        --mono: 'JetBrains Mono Variable', monospace;
+        --serif: 'Instrument Serif', serif;
+      }
+      html,
+      body {
+        width: 1280px;
+        height: 640px;
+        overflow: hidden;
+        background: var(--cream);
+      }
+      .cover {
+        position: relative;
+        width: 1280px;
+        height: 640px;
+        overflow: hidden;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: var(--display);
+      }
+      .dots {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(rgb(17 17 17 / 0.11) 1.6px, transparent 2px) 0 0 / 26px 26px;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      /* ——— left: who ——— */
+      .left {
+        position: absolute;
+        left: 56px;
+        top: 52px;
+        width: 560px;
+      }
+      .left .eyebrow span + span::before {
+        content: '/';
+        margin: 0 14px;
+        opacity: 0.4;
+      }
+      h1 {
+        margin-top: 20px;
+        font-size: 206px;
+        font-weight: 800;
+        font-stretch: 75%;
+        line-height: 0.8;
+        letter-spacing: -0.015em;
+        text-transform: uppercase;
+      }
+      h1 span {
+        display: block;
+        width: fit-content;
+        position: relative;
+      }
+      /* standing next to YEN, on the baseline, judging */
+      .duck {
+        position: absolute;
+        left: calc(100% + 0.03em);
+        bottom: 0.01em;
+        width: 0.56em;
+        filter: drop-shadow(0 14px 16px rgb(0 0 0 / 0.18));
+      }
+      .lede {
+        margin-top: 26px;
+        max-width: 30ch;
+        font-size: 21px;
+        line-height: 1.3;
+        font-weight: 500;
+      }
+      .lede em {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 400;
+        font-size: 1.12em;
+      }
+      .lede mark {
+        background: none;
+        box-shadow: inset 0 -0.42em 0 #ffd23f;
+        color: inherit;
+        padding: 0 0.08em;
+      }
+      .url {
+        margin-top: 16px;
+        display: inline-block;
+        padding: 9px 16px 8px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: var(--cream);
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.02em;
+      }
+
+      /* ——— right: the stack of posters, newest in front ——— */
+      .stack {
+        position: absolute;
+        inset: 0;
+        rotate: -3deg;
+        transform-origin: 900px 360px;
+      }
+      .card {
+        position: absolute;
+        width: 340px;
+        height: 380px;
+        border-radius: 26px;
+        overflow: hidden;
+        box-shadow: 0 22px 44px -22px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(0 0 0 / 0.06);
+      }
+      .card .tab {
+        position: absolute;
+        left: 18px;
+        top: 7px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .card .tab i {
+        font-style: normal;
+        opacity: 0.6;
+        margin-right: 8px;
+      }
+      .card.front .tab {
+        display: none;
+      }
+      .front .spot {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 70% 60%, rgb(11 92 255 / 0.35), transparent 60%),
+          radial-gradient(rgb(11 92 255 / 0.45) 1.4px, transparent 1.9px) 0 0 / 20px 20px;
+        -webkit-mask-image: radial-gradient(circle at 70% 60%, #000, rgb(0 0 0 / 0.15) 75%);
+        mask-image: radial-gradient(circle at 70% 60%, #000, rgb(0 0 0 / 0.15) 75%);
+      }
+      .front .meta {
+        position: absolute;
+        left: 24px;
+        top: 24px;
+        right: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        align-items: center;
+        font-size: 11px;
+      }
+      .front .bar {
+        display: inline-block;
+        width: 74px;
+        height: 14px;
+        border-radius: 3px;
+        background: currentColor;
+        vertical-align: -2px;
+      }
+      .front .rec {
+        color: #ff3b4e;
+      }
+      .front h2 {
+        position: absolute;
+        left: 22px;
+        top: 66px;
+        font-size: 128px;
+        font-weight: 800;
+        font-stretch: 75%;
+        line-height: 0.8;
+        letter-spacing: -0.015em;
+        text-transform: uppercase;
+      }
+      .front .line {
+        position: absolute;
+        left: 24px;
+        right: 70px;
+        top: 186px;
+        font-size: 15px;
+        line-height: 1.35;
+        font-weight: 500;
+      }
+      .front .line .redact {
+        background: currentColor;
+        border-radius: 3px;
+        padding: 0 0.15em;
+      }
+      .front .sdks {
+        position: absolute;
+        left: 24px;
+        right: 24px;
+        bottom: 26px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .front .sdks div {
+        border-top: 2px solid currentColor;
+        padding-top: 8px;
+      }
+      .front .sdks b {
+        display: block;
+        font-size: 26px;
+        font-weight: 800;
+        font-stretch: 78%;
+        line-height: 0.95;
+      }
+      .front .sdks span {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        opacity: 0.85;
+      }
+
+      /* ——— toys ——— */
+      .toy {
+        position: absolute;
+        filter: drop-shadow(0 16px 18px rgb(0 0 0 / 0.22));
+      }
+
+      /* ——— tape ——— */
+      .tape {
+        position: absolute;
+        left: -40px;
+        right: -40px;
+        bottom: 14px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        padding-left: 40px;
+        background: var(--ink);
+        color: var(--cream);
+        rotate: -1.6deg;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .tape b {
+        color: var(--tomato);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cover" id="cover">
+      <div class="dots"></div>
+      <div class="left">
+        <p class="eyebrow"><span>Portfolio</span><span>Sunnyvale, CA</span><span>Est. 2012</span></p>
+        <h1><span>David</span><span>Yen<img class="duck" id="duck" alt="" /></span></h1>
+        <p class="lede">Full-stack engineer making the web <mark>faster</mark> for 11+ years. Seven companies, too many side projects, <em>one cookie banner.</em></p>
+        <p class="url">davidyen1124.github.io/portfolio ↗</p>
+      </div>
+      <div class="stack" id="stack"></div>
+      <div id="toys"></div>
+      <div class="tape" id="tape"></div>
+    </div>
+    <script type="module">
+      import '@fontsource-variable/bricolage-grotesque/standard.css'
+      import '@fontsource-variable/jetbrains-mono'
+      import '@fontsource/instrument-serif/400-italic.css'
+      import { COMPANIES } from '/src/content.ts'
+
+      const img = (name) => `${import.meta.env.BASE_URL}img/${name}.webp`
+      const newestFirst = [...COMPANIES].sort((a, b) => b.year - a.year)
+      const stack = document.getElementById('stack')
+
+      // back of the pile first, so the newest card is painted on top
+      const FRONT = { x: 636, y: 176 }
+      const STEP = { x: 38, y: -27 }
+      newestFirst
+        .slice()
+        .reverse()
+        .forEach((c, i, all) => {
+          const depth = all.length - 1 - i // 0 = front
+          const card = document.createElement('div')
+          card.className = 'card' + (depth === 0 ? ' front' : '')
+          card.style.left = `${FRONT.x + STEP.x * depth}px`
+          card.style.top = `${FRONT.y + STEP.y * depth}px`
+          card.style.background = c.theme.bg
+          card.style.color = c.theme.ink
+          const name = c.name.replace(/^Yahoo$/, 'Yahoo!')
+          card.innerHTML = `<p class="tab" style="color:${c.theme.name ?? c.theme.ink}"><i>${c.year}</i>${name}</p>`
+          if (depth === 0) {
+            card.innerHTML += `
+              <div class="spot"></div>
+              <p class="meta eyebrow"><span>01 / 07</span><span>${c.when}</span><span>Classified</span><span class="bar"></span><span class="rec">● REC</span></p>
+              <h2 style="color:${c.theme.name}">${c.name}</h2>
+              <p class="line">Something to do with Zoom’s Meeting SDK and Video SDK for the web. The rest is <span class="redact">still on mute</span>.</p>
+              <div class="sdks" style="color:${c.theme.name}">
+                <div><b>Meeting SDK</b><span style="color:${c.theme.ink}">meetings, embedded</span></div>
+                <div><b>Video SDK</b><span style="color:${c.theme.ink}">video, your own UI</span></div>
+              </div>`
+          }
+          stack.append(card)
+        })
+
+      const toys = [
+        ['zoom-camera', 948, 316, 150, -8],
+        ['tf-cursor', 556, 242, 88, -16],
+        ['dcard-plane', 1132, 418, 112, 6],
+        ['choco-bar', 1170, 226, 88, 18],
+      ]
+      document.getElementById('toys').innerHTML = toys
+        .map(([n, x, y, w, r]) => `<img class="toy" src="${img(n)}" style="left:${x}px;top:${y}px;width:${w}px;rotate:${r}deg" alt="" />`)
+        .join('')
+      document.getElementById('duck').src = img('hero-duck')
+
+      const names = newestFirst.map((c) => (c.name === 'Yahoo' ? 'Yahoo!' : c.name))
+      document.getElementById('tape').innerHTML = [...names, 'Side projects', 'One cookie banner', ...names]
+        .map((n) => `<span>${n}</span><b>✦</b>`)
+        .join('')
+
+      await document.fonts.ready
+      await Promise.all([...document.images].map((i) => i.decode().catch(() => {})))
+      document.documentElement.dataset.ready = '1'
+    </script>
+  </body>
+</html>
