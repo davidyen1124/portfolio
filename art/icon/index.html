@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>favicon</title>
+    <!-- Rendered to public/favicon.png + public/apple-touch-icon.png by scripts/icon.mjs (dev server required, for the font). -->
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 512px; height: 512px; background: transparent; }
+      .icon {
+        position: relative;
+        width: 512px;
+        height: 512px;
+        border-radius: 112px;
+        background: #111;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      /* the header logo's ® dot, in the site's tomato */
+      .icon i {
+        position: absolute;
+        top: 70px;
+        right: 70px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #ff4a1c;
+      }
+      b {
+        font-family: 'Bricolage Grotesque Variable', sans-serif;
+        font-size: 360px;
+        font-weight: 800;
+        font-stretch: 75%;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        color: #f4efe6;
+        translate: -8px 18px;
+      }
+      /* the apple-touch icon is square: iOS rounds the corners itself */
+      .square .icon { border-radius: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="icon" id="icon"><b>DY</b><i></i></div>
+    <script type="module">
+      import '@fontsource-variable/bricolage-grotesque/standard.css'
+      if (location.hash === '#square') document.documentElement.classList.add('square')
+      await document.fonts.ready
+      document.documentElement.dataset.ready = '1'
+    </script>
+  </body>
+</html>

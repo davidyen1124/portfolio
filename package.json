@@ -12,7 +12,8 @@
     "art:gen": "node scripts/gen.mjs",
     "art:process": "node scripts/process.mjs",
     "qa": "node scripts/qa.mjs",
-    "cover": "node scripts/cover.mjs"
+    "cover": "node scripts/cover.mjs",
+    "icon": "node scripts/icon.mjs"
   },
   "repository": {
     "type": "git",
