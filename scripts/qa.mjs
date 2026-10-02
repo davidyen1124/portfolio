@@ -61,6 +61,15 @@ function inspect() {
     if (el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflow === 'visible' && el.clientWidth > 0 && !el.matches('.line__in, .co__name, .hero__name'))
       issues.push(`overflowing text: ${name} ${el.scrollWidth}>${el.clientWidth}`)
   }
+  // panels in the horizontal track are exempt above, but once one is fully on screen it must fit vertically
+  for (const panel of cur.querySelectorAll('.projects__intro, .projects__more')) {
+    const pr = panel.getBoundingClientRect()
+    if (pr.left < -1 || pr.right > W + 1) continue
+    for (const child of [panel.firstElementChild, panel.lastElementChild]) {
+      const r = child.getBoundingClientRect()
+      if (r.top < hudH - 4 || r.bottom > H + 1) issues.push(`track panel too tall: .${panel.classList[0]} .${child.classList[0] ?? child.tagName.toLowerCase()} [${Math.round(r.top)}, ${Math.round(r.bottom)}] of ${H}`)
+    }
+  }
   // toys covering the reading copy (names are allowed to sit in front of toys)
   const copy = [...cur.querySelectorAll('.co__line, .stat, .co__foot, .co__meta, .hero__lede, .hero__chips li, .rewind__line')].filter(visible)
   for (const p of cur.querySelectorAll('.prop__img')) {

@@ -74,7 +74,7 @@ export const ASSETS = [
   { name: 'p-cloud', size: SQ, prompt: `A puffy, cute weather cloud with a warm yellow sun peeking out from behind it and three glossy blue raindrops falling from its underside.` },
   { name: 'p-beaver', size: SQ, prompt: `A brown beaver lying back on a bright pink inflatable pool float ring, wearing tiny sunglasses, arms behind its head, completely relaxed, flat tail hanging off the float.` },
   { name: 'p-neck', size: SQ, prompt: `A small calm office-worker figurine with a serene smile and an absurdly, impossibly long neck that rises and gently curves like a noodle, wearing a neat collared shirt. Deadpan, peaceful, a little ridiculous.` },
-  { name: 'p-calc', size: SQ, prompt: `A chunky retro pocket calculator floating on top of a small fluffy cloud, blank buttons, blank display glowing faintly green.` },
+  { name: 'p-fortune', size: SQ, prompt: `A golden-brown fortune cookie cracked open into two crisp halves, a small blank white paper slip curling up out of the break between them, a few crumbs caught mid-air. The paper slip is completely blank: no writing at all.` },
   { name: 'p-robot', size: SQ, prompt: `A friendly retro tin-toy robot giving a big thumbs-up with one hand, boxy head with round eyes and a little antenna, blue and silver.` },
   { name: 'p-rocket', size: SQ, prompt: `A fat cardboard firework rocket with a candy-striped red and white body, a lit fuse throwing little sparks, tilted as if about to launch.` },
   { name: 'p-soup', size: SQ, prompt: `A round ceramic soup bowl full of glossy orange soup swirling into a spiral vortex, a few noodles and a spoon being pulled into the whirlpool.` },

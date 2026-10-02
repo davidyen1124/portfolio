@@ -363,11 +363,12 @@ export const PROJECTS: Project[] = [
     ink: '#111111',
   },
   {
-    repo: 'arithmetic-as-a-service',
-    name: 'Arithmetic as a Service',
-    img: 'p-calc',
-    blurb: 'A mobile-first calculator that turns 2 + 2 into a cloud strategy. The demo has since been shut down, which is the most startup thing about it.',
-    tags: ['TypeScript', 'Workers'],
+    repo: 'fortune-cookie',
+    name: 'Fortune Cookie',
+    img: 'p-fortune',
+    blurb: 'The best part of Chinese takeout, minus the takeout. A real scanned cookie, real physics, and fortunes picked by Math.random(), which is about as qualified.',
+    tags: ['three.js', 'Rapier'],
+    live: 'https://davidyen1124.github.io/fortune-cookie/',
     stars: 1,
     bg: '#C8A8FF',
     ink: '#111111',
@@ -408,6 +409,7 @@ export const PROJECTS: Project[] = [
 
 /** The rest of the pile, all public. */
 export const MORE_REPOS = [
+  'arithmetic-as-a-service',
   'mrt-app',
   'pixel-eyes',
   'citrus-stare',

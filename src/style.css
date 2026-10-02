@@ -1926,6 +1926,22 @@ mark {
   .end__grid {
     grid-template-columns: 1fr;
   }
+  /* 25 repo pills have to fit one phone screen, button included */
+  .projects__more {
+    width: 90vw;
+    gap: 12px;
+  }
+  .more__list {
+    gap: 6px 5px;
+  }
+  .more__list a {
+    font-size: 10.5px;
+    padding: 5px 8px 4px;
+  }
+  .projects__more .btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
   .notifs {
     top: calc(var(--hud-h) + 4px);
     right: 12px;
@@ -2135,6 +2151,21 @@ mark {
   }
   .card__links a {
     padding: 7px 10px;
+    font-size: 13px;
+  }
+  .projects__more {
+    width: min(700px, 80vw);
+    gap: 9px;
+  }
+  .more__list {
+    gap: 5px;
+  }
+  .more__list a {
+    font-size: 10.5px;
+    padding: 4px 8px 3px;
+  }
+  .projects__more .btn {
+    padding: 8px 14px;
     font-size: 13px;
   }
   .bot-launch {
