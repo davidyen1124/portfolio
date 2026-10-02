@@ -142,6 +142,24 @@ for (const [name, ctxOpts] of [
   await shot('7-end-mom')
   check(errors.length === 0, `no page errors ${errors.join(' | ')}`)
   await ctx.close()
+
+  // the permission bubble must not wait for an answer forever: it leaves when you scroll on, or after ~8s
+  for (const how of ['scroll', 'timeout']) {
+    const c2 = await browser.newContext(ctxOpts)
+    const p2 = await c2.newPage()
+    await p2.goto(URL, { waitUntil: 'networkidle' })
+    await p2.waitForSelector('.cookie', { timeout: 15000 }) // intro finished
+    await p2.evaluate(() => window.scrollTo(0, document.getElementById('zoom').offsetTop + innerHeight * 0.3))
+    await p2.waitForSelector('.perm', { timeout: 8000 })
+    await p2.waitForTimeout(600)
+    if (how === 'scroll') {
+      await p2.evaluate(() => window.scrollBy(0, innerHeight * 0.45))
+      await p2.waitForTimeout(900)
+    } else await p2.waitForTimeout(9000)
+    check((await p2.locator('.perm').count()) === 0, `ignored permission bubble dismisses itself on ${how}`)
+    check(!(await p2.locator('.notif__text').allTextContents()).some((t) => /still on mute|respects your boundaries/.test(t)), `…quietly, with no follow-up notification (${how})`)
+    await c2.close()
+  }
 }
 await browser.close()
 console.log(fail.length ? `\n${fail.length} failure(s)` : '\nall humour checks passed')

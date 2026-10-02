@@ -38,7 +38,25 @@ export function permissionPrompt(root: HTMLElement) {
     { y: 0, opacity: 1, scale: 1, duration: 0.25, ease: 'power2.out', transformOrigin: '30px 0' },
   )
 
+  // Like the notifications, it doesn't wait for an answer forever: it leaves quietly once you
+  // scroll on, or after a few seconds of being ignored. Hovering it (desktop) holds it open.
+  const LINGER = 8000
+  const startY = window.scrollY
+  let closed = false
+  let timer = window.setTimeout(() => close(), LINGER)
+  const onScroll = () => Math.abs(window.scrollY - startY) > window.innerHeight * 0.33 && close()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  p.addEventListener('pointerenter', () => clearTimeout(timer))
+  p.addEventListener('pointerleave', () => {
+    clearTimeout(timer)
+    timer = window.setTimeout(() => close(), 3000)
+  })
+
   const close = (answer?: keyof typeof PERMISSION) => {
+    if (closed) return
+    closed = true
+    clearTimeout(timer)
+    window.removeEventListener('scroll', onScroll)
     document.removeEventListener('keydown', onKey)
     gsap.to(p, {
       opacity: 0,
