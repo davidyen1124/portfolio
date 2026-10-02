@@ -212,9 +212,38 @@ export function projectsScene() {
   const track = $('#track')
   const end = $('.end')
   const dist = () => Math.max(0, track.scrollWidth - window.innerWidth)
+
+  // "The rest of the pile" has to fit one screen, whatever the screen. Hide repos from the end
+  // until it does, and say how many are missing. The GitHub button below lists them all anyway.
+  const pile = $('.projects__more', section)
+  const list = $('#moreList', pile)
+  const repos = $$('li', list)
+  const rest = document.createElement('li')
+  rest.className = 'more__rest'
+  list.append(rest)
+  const fitPile = () => {
+    const cs = getComputedStyle(track)
+    const room = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+    let shown = repos.length
+    const apply = () => {
+      repos.forEach((li, i) => (li.hidden = i >= shown))
+      rest.hidden = shown === repos.length
+      rest.innerHTML = `<a href="https://github.com/davidyen1124?tab=repositories" target="_blank" rel="noopener">+${repos.length - shown} more</a>`
+    }
+    apply()
+    while (pile.offsetHeight > room && shown > 4) {
+      shown--
+      apply()
+    }
+  }
+
   // enter (1 screen, over Typeface) + the track + a short hold + covered (1 screen)
-  const size = () => (section.style.height = `${Math.round(H() * 2.15 + dist())}px`)
+  const size = () => {
+    fitPile()
+    section.style.height = `${Math.round(H() * 2.15 + dist())}px`
+  }
   size()
+  document.fonts.ready.then(size)
   ScrollTrigger.addEventListener('refreshInit', size)
 
   gsap

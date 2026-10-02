@@ -1044,6 +1044,13 @@ mark {
   border: 1.5px solid color-mix(in srgb, var(--ink) 35%, transparent);
   transition: background 0.2s, color 0.2s, rotate 0.2s;
 }
+.more__list li[hidden] {
+  display: none;
+}
+.more__rest a {
+  border-style: dashed;
+  opacity: 0.8;
+}
 .more__list a:hover {
   background: var(--accent);
   color: #111;
@@ -1899,6 +1906,8 @@ mark {
   .stat__label {
     font-size: 9.5px;
     letter-spacing: 0;
+    /* lets a label shrink to its column; long words carry a soft hyphen in content.ts */
+    min-width: 0;
   }
   .co__foot {
     font-size: 13px;

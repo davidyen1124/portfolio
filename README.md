@@ -59,7 +59,7 @@ npm run art:process              # trim + WebP at two sizes → public/img, real
 
 ```bash
 npm run dev -- --port 5199 &
-npm run qa -- --vp desktop,laptop,wide,tablet,mobile,small,reduced,landscape
+npm run qa -- --vp desktop,laptop,wide,tablet,mobile,small,se,reduced,landscape
 node scripts/qa-ui.mjs
 node scripts/qa-swipe.mjs http://localhost:5199/portfolio/
 node scripts/qa-links.mjs https://davidyen1124.github.io/portfolio/

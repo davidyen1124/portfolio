@@ -19,6 +19,7 @@ const VIEWPORTS = {
   tablet: { viewport: { width: 820, height: 1180 }, isMobile: true, hasTouch: true },
   mobile: { ...devices['iPhone 13'], defaultBrowserType: undefined },
   small: { viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
+  se: { viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   reduced: { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' },
   landscape: { viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
 }

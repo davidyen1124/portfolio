@@ -116,7 +116,7 @@ export const COMPANIES: Company[] = [
       { to: 10, suffix: '×', label: 'user growth, 300 → 3,000' },
       { to: 2, suffix: '×', label: 'page views from the modal viewer' },
       { to: 1, prefix: '−', suffix: 's', label: 'off every page render' },
-      { to: 3, label: 'AWS zones of push notifications' },
+      { to: 3, label: 'AWS zones of push notifi\u00ADcations' }, // soft hyphen: four stats share a 320px phone
     ],
     tape: ['Node.js', 'Redis', 'MongoDB', 'AWS × 3 zones', 'Push notifications', 'Modal viewer', '300 → 3,000'],
     props: [
