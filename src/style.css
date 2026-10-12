@@ -1935,7 +1935,7 @@ mark {
   .end__grid {
     grid-template-columns: 1fr;
   }
-  /* 25 repo pills have to fit one phone screen, button included */
+  /* the repo pills have to fit one phone screen, button included (scenes.ts hides the last few if they can't) */
   .projects__more {
     width: 90vw;
     gap: 12px;

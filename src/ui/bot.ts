@@ -35,7 +35,7 @@ const RULES: [RegExp, string | string[]][] = [
   [/dcard/i, 'Founding engineer at Dcard. Helped it grow 10×, from 300 users to 3,000. Everyone starts somewhere.'],
   [/choco/i, 'CHOCOLABS: an internship with 90% test coverage. Despite the name, he insists it was mostly Node.js and very little chocolate.'],
   [/spark|android|app/i, 'Sparks Lab was his indie Android label: four apps, 150k+ installs and two national first places. He was a student. It’s a bit much, honestly.'],
-  [/side project|project|github|repo|build/i, 'Sixty-plus public repos. Highlights include a temple-divination physics engine and a beaver on a pool float. I don’t make the rules.'],
+  [/side project|project|github|repo|build/i, 'Fifty-plus public repos. Highlights include a human body made of old picture tubes and a beaver on a pool float. I don’t make the rules.'],
   [/where|location|live|based|taiwan|taipei|sunnyvale|bay area/i, 'Sunnyvale, California. Originally Taipei. Has opinions about bubble tea and will share them unprompted.'],
   [/contact|email|reach|talk|mail/i, `${MAIL}. He replies faster than Yahoo reports used to.`],
   [/thank|thx|\bty\b/i, 'You’re welcome. This was the highlight of my week. I was deployed this week.'],
